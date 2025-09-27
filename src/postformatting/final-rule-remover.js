@@ -5,7 +5,7 @@ export default function finalRuleRemover (ast, propertiesToRemove) {
   csstree.walk(ast, {
     visit: 'Rule',
     leave: (rule, item, list) => {
-      if (rule.block.children.isEmpty()) {
+      if (rule.block.children.size === 0) {
         list.remove(item)
       }
     }
@@ -35,7 +35,7 @@ export default function finalRuleRemover (ast, propertiesToRemove) {
       /* Case 3: @-rule with CSS rules inside [REMAIN] */
       // non matching media queries are stripped out in non-matching-media-query-remover.js
       if (name === 'media' || name === 'document' || name === 'supports') {
-        if (atrule.block && !atrule.block.children.isEmpty()) {
+        if (atrule.block && atrule.block.children.size > 0) {
           return
         }
       }

@@ -121,7 +121,7 @@ export default async function buildSelectorProfile (
       if (addedRule) return
 
       // collect selectors and build a map
-      rule.prelude.children.each(selectorNode => {
+      rule.prelude.children.forEach(selectorNode => {
         const selector = normalizeSelector(
           selectorNode,
           forceInclude,

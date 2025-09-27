@@ -15,7 +15,7 @@ export default function embeddedbase64Remover (ast, maxEmbeddedBase64Length) {
       csstree.walk(declaration, {
         visit: 'Url',
         enter: function (url) {
-          const value = url.value.value
+          const value = url.value
           if (
             BASE64_ENCODE_PATTERN.test(value) &&
             value.length > maxEmbeddedBase64Length

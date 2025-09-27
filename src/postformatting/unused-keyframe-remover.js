@@ -6,7 +6,9 @@ const debuglog = debug('penthouse:css-cleanup:unused-keyframe-remover')
 function getAllKeyframes (ast) {
   return new Set(
     csstree.lexer.findAllFragments(ast, 'Type', 'keyframes-name').map(entry => {
-      const keyframeName = csstree.generate(entry.nodes.first())
+      const keyframeName = csstree.generate(
+        entry.nodes.head ? entry.nodes.head.data : entry.nodes
+      )
       debuglog('found used keyframe animation: ' + keyframeName)
       return keyframeName
     })
