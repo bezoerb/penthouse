@@ -21,7 +21,7 @@
     "node": ">=8.16.0"
   },
   "scripts": {
-    "lint": "eslint src",
+    "lint": "oxlint src",
     "test": "jest test/core.test.js",
     "test-all": "jest test/*.test.js && yarn test-extra && yarn test-perf",
     "test-perf": "jest  --runInBand test/run-sequential/perf.test.js",
@@ -48,17 +48,11 @@
     "@babel/plugin-transform-spread": "^7.27.1",
     "@babel/preset-env": "^7.28.3",
     "babel-jest": "^30.2.0",
-    "eslint": "^6.4.0",
-    "eslint-config-prettier": "^6.3.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
     "gm": "^1.25.1",
     "husky": "^3.0.5",
     "jest": "^30.2.0",
     "lint-staged": "^9.2.5",
+    "oxlint": "^1.18.0",
     "prettier": "^1.18.2",
     "prettier-standard": "^15.0.1",
     "rimraf": "^3.0.0"

@@ -14,7 +14,7 @@ function _isMatchingMediaQuery (mediaQuery, matchConfig) {
   let mediaAST
   try {
     mediaAST = cssMediaQuery.parse(mediaQuery)
-  } catch (e) {
+  } catch {
     // cant parse, most likely browser cant either
     return false
   }

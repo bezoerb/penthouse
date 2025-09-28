@@ -95,7 +95,7 @@ export default async function buildSelectorProfile (
 
   csstree.walk(ast, {
     visit: 'Rule',
-    enter: function (rule, item, list) {
+    enter: function (rule, _item, _list) {
       // ignore rules inside @keyframes at-rule
       if (
         this.atrule &&

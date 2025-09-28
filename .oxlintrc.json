@@ -1,0 +1,12 @@
+{
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "no-mixed-operators": "off",
+    "prefer-promise-reject-errors": "off",
+    "operator-linebreak": "off",
+    "indent": "off"
+  }
+}

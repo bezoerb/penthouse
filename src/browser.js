@@ -113,7 +113,7 @@ export async function browserIsRunning () {
     // will throw 'Not opened' error if browser is not running
     await browser.version()
     return true
-  } catch (e) {
+  } catch {
     return false
   }
 }
@@ -205,7 +205,7 @@ export async function closeBrowserPage ({
         debuglog('now try to close browser page')
         await page.close()
       }
-    } catch (err) {
+    } catch {
       debuglog('failed to close browser page (ignoring)')
     }
   }

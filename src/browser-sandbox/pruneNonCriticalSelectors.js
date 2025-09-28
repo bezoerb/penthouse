@@ -58,7 +58,7 @@ export default function pruneNonCriticalSelectors ({
     let elements
     try {
       elements = document.querySelectorAll(selector)
-    } catch (e) {
+    } catch {
       // not a valid selector, remove it.
       return false
     }

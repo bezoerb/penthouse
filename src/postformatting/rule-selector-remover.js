@@ -14,7 +14,7 @@ export default function ruleSelectorRemover (ast, selectorNodeMap, selectors) {
 
       // filter out non-critical selectors
       rule.prelude.children = rule.prelude.children.filter(
-        (selectorNode, item, list) => {
+        (selectorNode, _item, _list) => {
           let decision = selectorNodeMap.get(selectorNode)
           if (typeof decision === 'string') {
             decision = selectors.has(decision)

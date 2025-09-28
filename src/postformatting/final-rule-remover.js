@@ -1,6 +1,6 @@
 import csstree from 'css-tree'
 
-export default function finalRuleRemover (ast, propertiesToRemove) {
+export default function finalRuleRemover (ast, _propertiesToRemove) {
   // remove empty rules
   csstree.walk(ast, {
     visit: 'Rule',

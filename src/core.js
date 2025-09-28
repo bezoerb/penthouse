@@ -240,7 +240,7 @@ async function preparePage ({
       : msg
     // pass through log messages
     // - the ones sent by penthouse for debugging has 'debug: ' prefix.
-    if (/^debug: /.test(text)) {
+    if (text.startsWith('debug: ')) {
       debuglog(text.replace(/^debug: /, ''))
     }
   })
@@ -297,7 +297,7 @@ async function pruneNonCriticalCssLauncher ({
   maxEmbeddedBase64Length,
   keepLargerMediaQueries,
   maxElementsToCheckPerSelector,
-  unstableKeepBrowserAlive,
+  _unstableKeepBrowserAlive,
   allowedResponseCode
 }) {
   let _hasExited = false
