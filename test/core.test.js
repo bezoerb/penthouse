@@ -209,7 +209,7 @@ describe('penthouse core tests', () => {
       })
   })
 
-  it('should throw explicit error if page unloads during critical css generation', done => {
+  it('should throw explicit error if page unloads during critical css generation', () => {
     return penthouse({
       url: staticServerFileUrl('infinite-page-refresh.html'),
       cssString: '.doesNotMatterHere {}',
@@ -217,13 +217,13 @@ describe('penthouse core tests', () => {
       height: 450
     })
       .then(() => {
-        done(new Error('did not throw explicit page unload error'))
+        throw new Error('did not throw explicit page unload error')
       })
       .catch(err => {
         if (err.message === PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE) {
-          done()
+          // Test passes
         } else {
-          done(new Error('did not throw explicit page unload error, but instead: ' + err))
+          throw new Error('did not throw explicit page unload error, but instead: ' + err)
         }
       })
   })
