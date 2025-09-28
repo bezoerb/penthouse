@@ -26,13 +26,12 @@
     "test-all": "jest test/*.test.js && yarn test-extra && yarn test-perf",
     "test-perf": "jest  --runInBand test/run-sequential/perf.test.js",
     "test-extra": "jest --runInBand test/run-sequential/node-module.test.js",
-    "prepare": "npm run lint && npm run transpile",
+    "prepare": "husky",
     "transpile": "babel -d lib src/"
   },
   "lint-staged": {
     "src/**/*.js": [
-      "prettier-standard \"src/**/*.js\"",
-      "git add"
+      "prettier-standard"
     ]
   },
   "dependencies": {
@@ -67,10 +66,5 @@
   ],
   "files": [
     "lib/**/*.js"
-  ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  }
+  ]
 }
