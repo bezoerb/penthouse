@@ -1,12 +1,13 @@
 language: node_js
 node_js:
-    - "8.16.0"
-    - "10"
-dist: trusty
+    - "18.14.0"
+    - "20"
+    - "22"
+dist: focal
 addons:
   apt:
     packages:
-      # This is required to run puppeteer (chrome) on linux/trusty
+      # This is required to run puppeteer (chrome) on linux
       - libnss3
       # for screenshot comparison
       - graphicsmagick
@@ -16,7 +17,5 @@ cache:
     - node_modules
 install:
   - yarn
-before_script:
-  - 'if [ "$NODE6" = "true" ]; then npm build --cwd node_modules/puppeteer; fi'
 script:
   - yarn test-all
