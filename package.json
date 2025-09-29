@@ -26,7 +26,7 @@
     "test-all": "jest test/*.test.js && yarn test-extra && yarn test-perf",
     "test-perf": "jest  --runInBand test/run-sequential/perf.test.js",
     "test-extra": "jest --runInBand test/run-sequential/node-module.test.js",
-    "prepare": "husky",
+    "prepare": "husky && npm run transpile",
     "transpile": "babel -d lib src/"
   },
   "lint-staged": {
