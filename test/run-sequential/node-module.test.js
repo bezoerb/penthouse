@@ -77,15 +77,11 @@ describe("extra tests for penthouse node module", () => {
       puppeteer: {
         getBrowser: () => browser,
       },
-    })
-      .then(() => {
-        if (!browserUsed) {
-          throw new Error("Did not use the browser passed in options");
-        } else {
-          done();
-        }
-      })
-      .catch(done);
+    }).then(() => {
+      if (!browserUsed) {
+        throw new Error("Did not use the browser passed in options");
+      }
+    });
   });
 
   it("should handle parallell jobs, sharing one browser instance, closing afterwards", (done) => {
@@ -113,7 +109,7 @@ describe("extra tests for penthouse node module", () => {
                 done();
               }
             });
-          }, 3000); // Increased timeout to 3 seconds
+          }, 1000); 
         }
       })
       .catch(done);

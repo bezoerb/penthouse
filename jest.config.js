@@ -4,6 +4,7 @@ module.exports = {
   transform: {
     '^.+\\.js$': 'babel-jest'
   },
+  transformIgnorePatterns: [],
   moduleFileExtensions: ['js'],
   testMatch: ['**/test/**/*.test.js'],
   // Force Jest to exit after tests complete
