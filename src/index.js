@@ -1,6 +1,5 @@
 import fs from 'fs'
 import debug from 'debug'
-import { asyncExitHook, gracefulExit } from 'exit-hook'
 
 import generateCriticalCss from './core'
 import {
@@ -32,15 +31,8 @@ const DEFAULT_PROPERTIES_TO_REMOVE = [
 ]
 const _UNSTABLE_KEEP_ALIVE_MAX_KEPT_OPEN_PAGES = 4
 
-asyncExitHook(
-  async () => {
-    await closeBrowser({ forceClose: true })
-  },
-  { wait: 1000 }
-)
-
-function exitHandler (exitCode) {
-  gracefulExit(typeof exitCode === 'number' ? exitCode : 0)
+function exitHandler () {
+  closeBrowser({ forceClose: true })
 }
 
 function readFilePromise (filepath, encoding) {
