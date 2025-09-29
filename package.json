@@ -65,6 +65,7 @@
     "chrome:headless"
   ],
   "files": [
+    "src",
     "lib/**/*.js"
   ]
 }
