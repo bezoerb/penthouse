@@ -1,10 +1,10 @@
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 import debug from 'debug'
-import pruneNonCriticalSelectors from './browser-sandbox/pruneNonCriticalSelectors'
-import replacePageCss from './browser-sandbox/replacePageCss'
-import cleanupAst from './postformatting'
-import buildSelectorProfile from './selectors-profile'
-import nonMatchingMediaQueryRemover from './non-matching-media-query-remover'
+import pruneNonCriticalSelectors from './browser-sandbox/pruneNonCriticalSelectors.js'
+import replacePageCss from './browser-sandbox/replacePageCss.js'
+import cleanupAst from './postformatting/index.js'
+import buildSelectorProfile from './selectors-profile.js'
+import nonMatchingMediaQueryRemover from './non-matching-media-query-remover.js'
 
 const debuglog = debug('penthouse:core')
 

@@ -1,13 +1,12 @@
-'use strict'
-
+import { describe, it, test, expect, beforeAll, afterAll } from 'vitest'
 import path from 'path'
-import penthouse from '../lib/'
+import penthouse from '../src/index.js'
 import { readFileSync as read } from 'fs'
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 import http from 'http'
 import url from 'url'
 
-import normaliseCss from './util/normaliseCss'
+import normaliseCss from './util/normaliseCss.js'
 
 const serverPort = 8888
 const allowedResponseCodeError = /Server response status/
@@ -20,29 +19,24 @@ function responseStatusUrl (code) {
   return 'http://localhost:' + serverPort + '?responseStatus=' + code
 }
 
-function testAllowedResponseCode(shouldMatch, responseCode, allowedResponseCode, done) {
-  var errorMessage
-  if (shouldMatch) {
-    errorMessage = 'Did throw an error while allowedResponseCode was matching the response code'
-  } else {
-    errorMessage = 'Didn\'t throw an error while allowedResponseCode wasn\'t matching the response code'
-  }
+function testAllowedResponseCode(shouldMatch, responseCode, allowedResponseCode) {
+  const errorMessage = shouldMatch
+    ? 'Did throw an error while allowedResponseCode was matching the response code'
+    : 'Didn\'t throw an error while allowedResponseCode wasn\'t matching the response code'
 
-  penthouse({
+  return penthouse({
     url: responseStatusUrl(responseCode),
     allowedResponseCode: allowedResponseCode,
     cssString: 'body {}'
   }).then(() => {
-    if (shouldMatch) {
-      done()
-    } else {
-      done(new Error(errorMessage))
+    if (!shouldMatch) {
+      throw new Error(errorMessage)
     }
   }).catch((err) => {
     if (!shouldMatch && err.message.match(allowedResponseCodeError)) {
-      done()
+      return // Test passes
     } else if(shouldMatch) {
-      done(new Error(errorMessage))
+      throw new Error(errorMessage)
     }
   })
 }
@@ -138,14 +132,12 @@ describe('basic tests of penthouse functionality', () => {
       })
   })
 
-  it('should crash with errors in strict mode on invalid css', done => {
-    penthouse({
+  it('should crash with errors in strict mode on invalid css', () => {
+    return expect(penthouse({
       url: page1FileUrl,
       css: path.join(process.env.PWD, 'test', 'static-server', 'invalid.css'),
       strict: true
-    })
-      .then(() => done(new Error('Did not get error')))
-      .catch(() => done())
+    })).rejects.toThrow()
   })
 
   it('should not crash or hang on special chars', () => {
@@ -158,80 +150,77 @@ describe('basic tests of penthouse functionality', () => {
       })
   })
 
-  it('should surface parsing errors to the end user', done => {
-    penthouse({
+  it('should surface parsing errors to the end user', () => {
+    return expect(penthouse({
       css: 'missing.css'
-    })
-      .then(() => done(new Error('Did not get error')))
-      .catch(() => done())
+    })).rejects.toThrow()
   })
 
-  it('should exit after timeout', done => {
-    penthouse({
+  it('should exit after timeout', () => {
+    return penthouse({
       url: page1FileUrl,
       css: page1cssPath,
       timeout: 100
     })
-      .then(() => done(new Error('Got no timeout error')))
+      .then(() => {
+        throw new Error('Got no timeout error')
+      })
       .catch(err => {
         if (err && /Penthouse timed out/.test(err)) {
-          done()
+          return // Test passes
         } else {
-          done(new Error('Did not get timeout error, got: ' + err))
+          throw new Error('Did not get timeout error, got: ' + err)
         }
       })
   })
 
 
-  it('should not throw an error on a 401 without allowedResponseCode option', done => {
-    penthouse({
+  it('should not throw an error on a 401 without allowedResponseCode option', () => {
+    return penthouse({
       url: responseStatusUrl(401),
       css: page1cssPath
-    }).then(() => {
-      done()
     }).catch((err) => {
       if (err && err.message.match(allowedResponseCodeError)) {
-        done(new Error('Error thrown on a 401 without allowedResponseCode option'))
-      } else {
-        done()
+        throw new Error('Error thrown on a 401 without allowedResponseCode option')
       }
+      // Otherwise the test passes (error was something else)
     })
   })
 
   // allowedResponseCode not matching
-  it('should throw an error on non matching allowedResponseCode (number) option', done => {
-    testAllowedResponseCode(false, 401, 200, done)
+  it('should throw an error on non matching allowedResponseCode (number) option', () => {
+    return testAllowedResponseCode(false, 401, 200)
   })
 
-  it('should throw an error on non matching allowedResponseCode (regex) option', done => {
-    testAllowedResponseCode(false, 401, /2\d+/, done)
+  it('should throw an error on non matching allowedResponseCode (regex) option', () => {
+    return testAllowedResponseCode(false, 401, /2\d+/)
   })
 
-  it('should throw an error on non matching allowedResponseCode (function) option', done => {
+  it('should throw an error on non matching allowedResponseCode (function) option', () => {
     const responseCode = 401
     function nonMatchFunction(response) {
       return response.status() === (responseCode + 1)
     }
 
-    testAllowedResponseCode(false, 401, nonMatchFunction, done)
+    return testAllowedResponseCode(false, 401, nonMatchFunction)
 
   })
 
   // matching allowedResponseCode
-  it('shouldn\'t throw an error on matching allowedResponseCode (number) option', done => {
-    testAllowedResponseCode(true, 401, 401, done)
+  it('shouldn\'t throw an error on matching allowedResponseCode (number) option', () => {
+    return testAllowedResponseCode(true, 401, 401)
   })
 
-  it('shouldn\'t throw an error on matching allowedResponseCode (regex) option', done => {
-    testAllowedResponseCode(true, 401, /4\d+/, done)
+  it('shouldn\'t throw an error on matching allowedResponseCode (regex) option', () => {
+    return testAllowedResponseCode(true, 401, /4\d+/)
   })
 
-  it('shouldn\'t throw an error on matching allowedResponseCode (function) option', done => {
+  it('shouldn\'t throw an error on matching allowedResponseCode (function) option', () => {
     const responseCode = 401
     function matchFunction(response) {
       return response.status() === responseCode
     }
 
-    testAllowedResponseCode(true, 401, matchFunction, done)
+    return testAllowedResponseCode(true, 401, matchFunction)
   })
 })

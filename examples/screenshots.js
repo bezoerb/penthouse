@@ -3,7 +3,7 @@
 // `-before`, of original page
 // `-after`, with all css on page replaced by the generated critical css
 
-const penthouse = require('penthouse')
+import penthouse from 'penthouse'
 
 // These settings will produce two screenshots:
 // 'homepage-before.jpg'

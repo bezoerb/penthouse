@@ -2,8 +2,8 @@
 // Can be used to setup custom configuration, and more.
 // See puppeteer docs for more options:
 // https://github.com/GoogleChrome/puppeteer).
-const penthouse = require('penthouse')
-const puppeteer = require('puppeteer') // installed by penthouse
+import penthouse from 'penthouse'
+import puppeteer from 'puppeteer' // installed by penthouse
 
 const browserPromise = puppeteer.launch({
   ignoreHTTPSErrors: true,

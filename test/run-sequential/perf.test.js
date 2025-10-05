@@ -1,6 +1,7 @@
+import { describe, it, expect } from 'vitest'
 import puppeteer from 'puppeteer'
 import path from 'path'
-import penthouse from '../../lib/'
+import penthouse from '../../src/index.js'
 
 
 function staticServerPerfHtmlUrl (file) {
@@ -34,7 +35,6 @@ const FIXTURES = [
 ]
 
 describe('performance tests for penthouse', () => {
-  jest.setTimeout(7000)
   const browserPromise = puppeteer.launch()
 
   let testsCompleted = 0

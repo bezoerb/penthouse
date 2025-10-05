@@ -1,13 +1,14 @@
-import csstree from 'css-tree'
+import { describe, it, expect } from 'vitest'
+import * as csstree from 'css-tree'
 import path from 'path'
-import penthouse from '../lib/'
+import penthouse from '../src/index.js'
 import { readFileSync as read } from 'fs'
-import normaliseCss from './util/normaliseCss'
+import normaliseCss from './util/normaliseCss.js'
 
-import ffRemover from '../lib/postformatting/unused-fontface-remover'
-import unusedKeyframeRemover from '../lib/postformatting/unused-keyframe-remover'
-import unwantedPropertiesRemover from '../lib/postformatting/unwanted-properties-remover'
-import embeddedbase64Remover from '../lib/postformatting/embedded-base64-remover'
+import ffRemover from '../src/postformatting/unused-fontface-remover.js'
+import unusedKeyframeRemover from '../src/postformatting/unused-keyframe-remover.js'
+import unwantedPropertiesRemover from '../src/postformatting/unwanted-properties-remover.js'
+import embeddedbase64Remover from '../src/postformatting/embedded-base64-remover.js'
 
 function staticServerFileUrl (file) {
   return 'file://' + path.join(process.env.PWD, 'test', 'static-server', file)

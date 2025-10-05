@@ -1,7 +1,8 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import debug from 'debug'
+import { asyncExitHook, gracefulExit } from 'exit-hook'
 
-import generateCriticalCss from './core'
+import generateCriticalCss from './core.js'
 import {
   launchBrowserIfNeeded,
   closeBrowser,
@@ -11,9 +12,20 @@ import {
   closeBrowserPage,
   addJob,
   removeJob
-} from './browser'
+} from './browser.js'
 
 const debuglog = debug('penthouse')
+
+// Register graceful shutdown handler for browser cleanup
+asyncExitHook(
+  async () => {
+    debuglog('exit hook: closing browser')
+    await closeBrowser({ forceClose: true })
+  },
+  {
+    wait: 2000 // Give browser 2 seconds to close gracefully
+  }
+)
 
 const DEFAULT_VIEWPORT_WIDTH = 1300 // px
 const DEFAULT_VIEWPORT_HEIGHT = 900 // px
@@ -32,7 +44,7 @@ const DEFAULT_PROPERTIES_TO_REMOVE = [
 const _UNSTABLE_KEEP_ALIVE_MAX_KEPT_OPEN_PAGES = 4
 
 function exitHandler () {
-  closeBrowser({ forceClose: true })
+  gracefulExit()
 }
 
 function readFilePromise (filepath, encoding) {
@@ -177,7 +189,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
   return formattedCss
 }
 
-module.exports = async function (options, callback) {
+export default async function penthouse (options, callback) {
   process.on('exit', exitHandler)
   process.on('SIGTERM', exitHandler)
   process.on('SIGINT', exitHandler)

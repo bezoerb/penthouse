@@ -1,9 +1,10 @@
+import { describe, it, expect } from 'vitest'
 import path from 'path'
-import penthouse from '../lib/'
+import penthouse from '../src/index.js'
 import { readFileSync as read } from 'fs'
-import normaliseCss from './util/normaliseCss'
+import normaliseCss from './util/normaliseCss.js'
 
-import { PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE } from '../lib/core'
+import { PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE } from '../src/core.js'
 
 describe('penthouse core tests', () => {
   function staticServerFileUrl (file) {

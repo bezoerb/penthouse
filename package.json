@@ -16,18 +16,23 @@
     "url": "https://github.com/pocketjoso/penthouse/issues"
   },
   "license": "MIT",
-  "main": "./lib/index.js",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js"
+    }
+  },
   "engines": {
     "node": ">=18.14.0"
   },
   "scripts": {
     "lint": "oxlint src",
-    "test": "jest test/core.test.js",
-    "test-all": "jest test/*.test.js && yarn test-extra && yarn test-perf",
-    "test-perf": "jest  --runInBand test/run-sequential/perf.test.js",
-    "test-extra": "jest --runInBand test/run-sequential/node-module.test.js",
-    "prepare": "husky && npm run transpile",
-    "transpile": "babel -d lib src/"
+    "test": "vitest run test/core.test.js",
+    "test-all": "vitest run test/*.test.js && yarn test-extra && yarn test-perf",
+    "test-perf": "vitest run test/run-sequential/perf.test.js",
+    "test-extra": "vitest run test/run-sequential/node-module.test.js",
+    "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.js": [
@@ -38,23 +43,19 @@
     "css-mediaquery": "^0.1.2",
     "css-tree": "3.1.0",
     "debug": "^4.4.3",
+    "exit-hook": "^4.0.0",
     "jsesc": "^3.1.0",
     "puppeteer": "^24.22.3"
   },
   "devDependencies": {
-    "@babel/cli": "^7.28.3",
-    "@babel/core": "^7.28.4",
-    "@babel/plugin-transform-spread": "^7.27.1",
-    "@babel/preset-env": "^7.28.3",
-    "babel-jest": "^30.2.0",
     "gm": "^1.25.1",
     "husky": "^9.1.7",
-    "jest": "^30.2.0",
     "lint-staged": "^16.2.3",
     "oxlint": "^1.18.0",
     "prettier": "^3.6.2",
     "prettier-standard": "^16.4.1",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vitest": "^3.2.4"
   },
   "keywords": [
     "CSS Critical Path Generator",
@@ -65,7 +66,6 @@
     "chrome:headless"
   ],
   "files": [
-    "src",
-    "lib/**/*.js"
+    "src"
   ]
 }

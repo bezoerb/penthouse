@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import puppeteer from "puppeteer";
 import { readFileSync as read } from "fs";
 import path from "path";
-import penthouse from "../../lib/";
+import penthouse from "../../src/index.js";
 
-import chromeProcessesRunning from "../util/chromeProcessesRunning";
-import normaliseCss from "../util/normaliseCss";
+import chromeProcessesRunning from "../util/chromeProcessesRunning.js";
+import normaliseCss from "../util/normaliseCss.js";
 
 function staticServerFileUrl(file) {
   return "file://" + path.join(process.env.PWD, "test", "static-server", file);
@@ -18,6 +19,11 @@ describe("extra tests for penthouse node module", () => {
     "static-server",
     "page1.css"
   );
+
+  // Give tests time to settle between runs to avoid browser state conflicts
+  afterEach(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  });
 
   // the last two tests are using the unstableKeepBrowserAlive property,
   // which expects to continue to use the same browser forever.
@@ -41,21 +47,18 @@ describe("extra tests for penthouse node module", () => {
     });
   });
 
-  it("error should not contain debug info", (done) => {
+  it("error should not contain debug info", () => {
     // callback
-    penthouse({
+    return penthouse({
       url: "http://localhost.does.not.exist",
       css: page1cssPath,
+    }).then(() => {
+      throw new Error("did not return expected error")
     }).catch((err) => {
-      if (err) {
-        if (/^Error: time: 0/.test(err)) {
-          done(err);
-        } else {
-          done();
-        }
-        return;
+      if (err && /^Error: time: 0/.test(err)) {
+        throw err;
       }
-      done(new Error("did not return expected error"));
+      // Otherwise test passes
     });
   });
 
@@ -84,72 +87,68 @@ describe("extra tests for penthouse node module", () => {
     });
   });
 
-  it("should handle parallell jobs, sharing one browser instance, closing afterwards", (done) => {
+  it("should handle parallell jobs, sharing one browser instance, closing afterwards", async () => {
+    // Track existing Chrome processes before test (e.g., Electron apps, other browsers)
+    const beforeTest = await chromeProcessesRunning();
+    const existingBrowserPIDs = new Set(beforeTest.browserPIDs || []);
+    const existingPagePIDs = new Set(beforeTest.pagePIDs || []);
+    
     const urls = [page1FileUrl, page1FileUrl, page1FileUrl];
     const promises = urls.map((url) => {
       return penthouse({ url, css: page1cssPath });
     });
-    Promise.all(promises)
-      .then((results) => {
-        const hasErrors = results.find((result) => {
-          return result.error || !result.length;
-        });
-        if (hasErrors) {
-          done(new Error("some result had errors: " + hasErrors));
-        } else {
-          // give chrome some time to shutdown
-          // NOTE: this test assumes no other chrome processes are running in this environment
-          setTimeout(() => {
-            chromeProcessesRunning().then(({ browsers, pages }) => {
-              if (browsers || pages) {
-                // pages: ${pages}
-                throw new Error(`Chromium seems to not have shut down properly:
-                  browsers: ${browsers}`);
-              } else {
-                done();
-              }
-            });
-          }, 1000); 
-        }
-      })
-      .catch(done);
+    const results = await Promise.all(promises);
+    const hasErrors = results.find((result) => {
+      return result.error || !result.length;
+    });
+    if (hasErrors) {
+      throw new Error("some result had errors: " + hasErrors);
+    }
+    
+    // Give Chrome some time to shut down
+    // NOTE: Browser cleanup is async, so we need to wait for processes to terminate
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    
+    // Check for NEW processes that weren't there before
+    const afterTest = await chromeProcessesRunning();
+    const newBrowserPIDs = (afterTest.browserPIDs || []).filter(pid => !existingBrowserPIDs.has(pid));
+    const newPagePIDs = (afterTest.pagePIDs || []).filter(pid => !existingPagePIDs.has(pid));
+    
+    if (newBrowserPIDs.length > 0 || newPagePIDs.length > 0) {
+      throw new Error(`Chromium processes created by this test did not shut down properly:
+        new browser PIDs: ${newBrowserPIDs.join(', ')}
+        new page PIDs: ${newPagePIDs.join(', ')}`);
+    }
   });
 
-  it("should keep chromium browser instance open, if requested", (done) => {
+  it("should keep chromium browser instance open, if requested", async () => {
     browserPromiseForUnstableKeepOpenTests = puppeteer.launch();
-    penthouse({
-      url: page1FileUrl,
-      css: page1cssPath,
-      unstableKeepBrowserAlive: true,
-      // so we can kill the browser after
-      puppeteer: { getBrowser: () => browserPromiseForUnstableKeepOpenTests },
-    })
-      .then(() => {
-        // wait a bit to ensure Chrome doesn't just take time to close
-        // we want to ensure it stays open
-        // NOTE: this test assumes no other chrome processes are running in this environment
-        setTimeout(() => {
-          chromeProcessesRunning().then(({ browsers }) => {
-            // so test finishes automatically
-            browserPromiseForUnstableKeepOpenTests.then((browser) => {
-              browser.close();
-            });
-
-            if (browsers) {
-              done();
-            } else {
-              done(
-                new Error(
-                  "Chromium did NOT keep running despite option telling it so"
-                )
-              );
-            }
-          });
-        }, 1000);
-      })
-      .catch((err) => {
-        browserPromise.then((browser) => browser.close());
-        done(err);
+    try {
+      await penthouse({
+        url: page1FileUrl,
+        css: page1cssPath,
+        unstableKeepBrowserAlive: true,
+        // so we can kill the browser after
+        puppeteer: { getBrowser: () => browserPromiseForUnstableKeepOpenTests },
       });
+      // wait a bit to ensure Chrome doesn't just take time to close
+      // we want to ensure it stays open
+      // NOTE: With fork isolation, we need less time here since we're checking if browser stays open
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const { browsers } = await chromeProcessesRunning();
+      // so test finishes automatically
+      const browser = await browserPromiseForUnstableKeepOpenTests;
+      await browser.close();
+
+      if (!browsers) {
+        throw new Error(
+          "Chromium did NOT keep running despite option telling it so"
+        );
+      }
+    } catch (err) {
+      const browser = await browserPromiseForUnstableKeepOpenTests;
+      await browser.close();
+      throw err;
+    }
   });
 });

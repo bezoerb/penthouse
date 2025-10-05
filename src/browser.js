@@ -73,10 +73,13 @@ export async function launchBrowserIfNeeded ({ getBrowser, width, height }) {
 
 export async function closeBrowser ({ forceClose, unstableKeepBrowserAlive }) {
   if (browser && (forceClose || !unstableKeepBrowserAlive)) {
-    if (ongoingJobs > 0) {
+    if (ongoingJobs > 0 && !forceClose) {
       debuglog('keeping browser open as ongoingJobs: ' + ongoingJobs)
     } else if (browser && browser.close) {
-      browser.close()
+      if (forceClose && ongoingJobs > 0) {
+        debuglog('force closing browser despite ongoingJobs: ' + ongoingJobs)
+      }
+      await browser.close() // FIXED: Now properly awaiting browser close
       browser = null
       _browserLaunchPromise = null
       debuglog('closed browser')

@@ -1,4 +1,4 @@
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 import debug from 'debug'
 
 const debuglog = debug('penthouse:css-cleanup:unused-keyframe-remover')

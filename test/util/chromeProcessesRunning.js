@@ -21,6 +21,17 @@ function grepProcessByPattern(pattern) {
   });
 }
 
+function extractPIDs(processLines) {
+  if (!processLines || !Array.isArray(processLines)) {
+    return [];
+  }
+  // Extract PIDs from ps aux output (second column)
+  return processLines.map(line => {
+    const parts = line.trim().split(/\s+/);
+    return parts[1]; // PID is the second column
+  }).filter(Boolean);
+}
+
 export default function chromeProcessesRunning() {
   return Promise.all([
     // bit fragile to match across platforms..
@@ -32,6 +43,8 @@ export default function chromeProcessesRunning() {
     return {
       browsers,
       pages,
+      browserPIDs: extractPIDs(browsers),
+      pagePIDs: extractPIDs(pages),
     };
   });
 }

@@ -57,8 +57,5 @@ jobs:
     - name: Lint code
       run: yarn lint
     
-    - name: Transpile code
-      run: yarn transpile
-    
     - name: Run tests
       run: yarn test-all

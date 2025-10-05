@@ -1,6 +1,7 @@
-import csstree from 'css-tree'
+import { describe, it, expect } from 'vitest'
+import * as csstree from 'css-tree'
 
-import nonMatchingMediaQueryRemover from '../lib/non-matching-media-query-remover'
+import nonMatchingMediaQueryRemover from '../src/non-matching-media-query-remover.js'
 
 function testMediaQueryRemoval (tests, width, height, keepLargerMediaQueries) {
   return [].concat(...tests.map(({rules, remove}) => {
@@ -25,7 +26,7 @@ function testMediaQueryRemoval (tests, width, height, keepLargerMediaQueries) {
 process.setMaxListeners(0)
 
 describe('penthouse pre formatting tests', () => {
-  it('should remove non matching media queries', done => {
+  it('should remove non matching media queries', () => {
     // 1300, 1600
     const mediaToAlwaysKeep = [
       `@media all {}`,
@@ -77,8 +78,7 @@ describe('penthouse pre formatting tests', () => {
     ]
     const defaultErrors = testMediaQueryRemoval(defaultTest, 1300, 900)
     if (defaultErrors.length) {
-      done(new Error('defaultErrors:\n' + defaultErrors.join('\n')))
-      return
+      throw new Error('defaultErrors:\n' + defaultErrors.join('\n'))
     }
 
     // test larger screen size settings
@@ -97,8 +97,7 @@ describe('penthouse pre formatting tests', () => {
     ]
     const largeErrors = testMediaQueryRemoval(largeTest, 1600, 1200)
     if (largeErrors.length) {
-      done(new Error('largeErrors:\n' + largeErrors.join('\n')))
-      return
+      throw new Error('largeErrors:\n' + largeErrors.join('\n'))
     }
 
     // test keepLargeMediaQueries - to be moved
@@ -114,10 +113,7 @@ describe('penthouse pre formatting tests', () => {
     ]
     let keepLargeMediaQueriesErrors = testMediaQueryRemoval(keepLargeMediaQueriesTest, 1300, 900, true)
     if (keepLargeMediaQueriesErrors.length) {
-      done(new Error('keepLargeMediaQueriesErrors:\n' + keepLargeMediaQueriesErrors.join('\n')))
-      return
+      throw new Error('keepLargeMediaQueriesErrors:\n' + keepLargeMediaQueriesErrors.join('\n'))
     }
-
-    done()
   })
 })

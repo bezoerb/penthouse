@@ -1,5 +1,5 @@
-const penthouse = require('penthouse')
-const fs = require('fs')
+import penthouse from 'penthouse'
+import fs from 'fs'
 
 penthouse({
   url: 'https://google.com',

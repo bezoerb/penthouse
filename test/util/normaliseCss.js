@@ -1,4 +1,4 @@
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 
 function parseCssAst (css) {
   return csstree.parse(css)

@@ -1,4 +1,4 @@
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 import cssMediaQuery from 'css-mediaquery'
 import debug from 'debug'
 
@@ -134,4 +134,4 @@ function nonMatchingMediaQueryRemover (
   return ast
 }
 
-module.exports = nonMatchingMediaQueryRemover
+export default nonMatchingMediaQueryRemover

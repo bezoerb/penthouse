@@ -1,4 +1,4 @@
-import csstree from 'css-tree'
+import * as csstree from 'css-tree'
 
 export default function unwantedPropertiesRemover (ast, propertiesToRemove) {
   const propertiesToRemoveRegexes = propertiesToRemove.map(
