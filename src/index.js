@@ -247,3 +247,5 @@ export default async function penthouse (options, callback) {
     return cleanupAndExit({ error: err })
   }
 }
+
+export { PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE } from './core.js'
