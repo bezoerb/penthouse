@@ -2,10 +2,10 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    testTimeout: 30000,
+    testTimeout: 5000,
     environment: 'node',
     include: ['test/**/*.test.js'],
-    teardownTimeout: 10000,
+    teardownTimeout: 2000,
     // Run each test file in its own process for proper isolation
     // This ensures exit-hook fires between test files
     pool: 'forks',

@@ -17,15 +17,15 @@ import {
 const debuglog = debug('penthouse')
 
 // Register graceful shutdown handler for browser cleanup
-asyncExitHook(
-  async () => {
-    debuglog('exit hook: closing browser')
-    await closeBrowser({ forceClose: true })
-  },
-  {
-    wait: 2000 // Give browser 2 seconds to close gracefully
-  }
-)
+// asyncExitHook(
+//   async () => {
+//     debuglog('exit hook: closing browser')
+//     await closeBrowser({ forceClose: true })
+//   },
+//   {
+//     wait: 2000 // Give browser 2 seconds to close gracefully
+//   }
+// )
 
 const DEFAULT_VIEWPORT_WIDTH = 1300 // px
 const DEFAULT_VIEWPORT_HEIGHT = 900 // px
@@ -43,9 +43,16 @@ const DEFAULT_PROPERTIES_TO_REMOVE = [
 ]
 const _UNSTABLE_KEEP_ALIVE_MAX_KEPT_OPEN_PAGES = 4
 
-function exitHandler () {
-  gracefulExit()
+function exitHandler (exitCode) {
+  closeBrowser({ forceClose: true })
+  process.exit(typeof exitCode === 'number' ? exitCode : 0)
 }
+
+// function exitHandler () {
+
+//   closeBrowser({ forceClose: true })
+//   gracefulExit()
+// }
 
 function readFilePromise (filepath, encoding) {
   return new Promise((resolve, reject) => {
@@ -195,13 +202,13 @@ export default async function penthouse (options, callback) {
   process.on('SIGINT', exitHandler)
 
   addJob()
-  function cleanupAndExit ({ returnValue, error = null }) {
+  async function cleanupAndExit ({ returnValue, error = null }) {
     process.removeListener('exit', exitHandler)
     process.removeListener('SIGTERM', exitHandler)
     process.removeListener('SIGINT', exitHandler)
     removeJob()
 
-    closeBrowser({
+    await closeBrowser({
       unstableKeepBrowserAlive: options.unstableKeepBrowserAlive
     })
 
@@ -224,12 +231,14 @@ export default async function penthouse (options, callback) {
       options = Object.assign({}, options, { cssString })
     } catch (err) {
       debuglog('error reading css file: ' + options.css + ', error: ' + err)
-      return cleanupAndExit({ error: err })
+      return await cleanupAndExit({ error: err })
     }
   }
   if (!options.cssString) {
     debuglog('Passed in css is empty')
-    return cleanupAndExit({ error: new Error('css should not be empty') })
+    return await cleanupAndExit({
+      error: new Error('css should not be empty')
+    })
   }
 
   const width = parseInt(options.width || DEFAULT_VIEWPORT_WIDTH, 10)
@@ -242,9 +251,9 @@ export default async function penthouse (options, callback) {
       height
     })
     const criticalCss = await generateCriticalCssWrapped(options)
-    return cleanupAndExit({ returnValue: criticalCss })
+    return await cleanupAndExit({ returnValue: criticalCss })
   } catch (err) {
-    return cleanupAndExit({ error: err })
+    return await cleanupAndExit({ error: err })
   }
 }
 
