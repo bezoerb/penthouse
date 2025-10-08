@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import puppeteer from "puppeteer";
 import { readFileSync as read } from "fs";
 import path from "path";
@@ -52,14 +52,16 @@ describe("extra tests for penthouse node module", () => {
     return penthouse({
       url: "http://localhost.does.not.exist",
       css: page1cssPath,
-    }).then(() => {
-      throw new Error("did not return expected error")
-    }).catch((err) => {
-      if (err && /^Error: time: 0/.test(err)) {
-        throw err;
-      }
-      // Otherwise test passes
-    });
+    })
+      .then(() => {
+        throw new Error("did not return expected error");
+      })
+      .catch((err) => {
+        if (err && /^Error: time: 0/.test(err)) {
+          throw err;
+        }
+        // Otherwise test passes
+      });
   });
 
   it("should use the browser given in options", async () => {
@@ -92,10 +94,10 @@ describe("extra tests for penthouse node module", () => {
     const beforeTest = await chromeProcessesRunning();
     const existingBrowserPIDs = new Set(beforeTest.browserPIDs || []);
     const existingPagePIDs = new Set(beforeTest.pagePIDs || []);
-    
+
     const urls = [page1FileUrl, page1FileUrl, page1FileUrl];
     const promises = urls.map((url) => {
-      return penthouse({ url, css: page1cssPath });
+      return penthouse({ url, css: page1cssPath, pageLoadSkipTimeout: 1000 });
     });
     const results = await Promise.all(promises);
     const hasErrors = results.find((result) => {
@@ -104,20 +106,24 @@ describe("extra tests for penthouse node module", () => {
     if (hasErrors) {
       throw new Error("some result had errors: " + hasErrors);
     }
-    
+
     // Give Chrome some time to shut down
     // NOTE: Browser cleanup is async, so we need to wait for processes to terminate
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    
+
     // Check for NEW processes that weren't there before
     const afterTest = await chromeProcessesRunning();
-    const newBrowserPIDs = (afterTest.browserPIDs || []).filter(pid => !existingBrowserPIDs.has(pid));
-    const newPagePIDs = (afterTest.pagePIDs || []).filter(pid => !existingPagePIDs.has(pid));
-    
+    const newBrowserPIDs = (afterTest.browserPIDs || []).filter(
+      (pid) => !existingBrowserPIDs.has(pid)
+    );
+    const newPagePIDs = (afterTest.pagePIDs || []).filter(
+      (pid) => !existingPagePIDs.has(pid)
+    );
+
     if (newBrowserPIDs.length > 0 || newPagePIDs.length > 0) {
       throw new Error(`Chromium processes created by this test did not shut down properly:
-        new browser PIDs: ${newBrowserPIDs.join(', ')}
-        new page PIDs: ${newPagePIDs.join(', ')}`);
+        new browser PIDs: ${newBrowserPIDs.join(", ")}
+        new page PIDs: ${newPagePIDs.join(", ")}`);
     }
   });
 
@@ -128,6 +134,7 @@ describe("extra tests for penthouse node module", () => {
         url: page1FileUrl,
         css: page1cssPath,
         unstableKeepBrowserAlive: true,
+        pageLoadSkipTimeout: 1000,
         // so we can kill the browser after
         puppeteer: { getBrowser: () => browserPromiseForUnstableKeepOpenTests },
       });

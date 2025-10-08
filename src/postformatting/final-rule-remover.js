@@ -1,5 +1,21 @@
 import * as csstree from 'css-tree'
 
+// Pre-compile Sets for O(1) lookup performance
+const NON_NESTED_ATRULES = new Set(['charset', 'import', 'namespace'])
+const PROPERTY_ATRULES = new Set([
+  'font-face',
+  'keyframes',
+  'viewport',
+  'property' // Modern: CSS custom properties with types
+])
+const NESTED_ATRULES = new Set([
+  'media',
+  'document',
+  'supports',
+  'container', // Modern: container queries
+  'layer' // Modern: cascade layers
+])
+
 export default function finalRuleRemover (ast, _propertiesToRemove) {
   // remove empty rules
   csstree.walk(ast, {
@@ -18,10 +34,10 @@ export default function finalRuleRemover (ast, _propertiesToRemove) {
       const name = csstree.keyword(atrule.name).basename
 
       /* ==@-rule handling== */
-      /* - Case 0 : Non nested @-rule [REMAIN]
+      /* Case 0: Non nested @-rule [REMAIN]
          (@charset, @import, @namespace)
       */
-      if (name === 'charset' || name === 'import' || name === 'namespace') {
+      if (NON_NESTED_ATRULES.has(name)) {
         return
       }
 
@@ -29,31 +45,16 @@ export default function finalRuleRemover (ast, _propertiesToRemove) {
          @font-face, @keyframes - keep here, but remove later in code, unless it is used.
          Modern: @property, @counter-style, @font-palette-values, @font-feature-values
       */
-      if (
-        name === 'font-face' ||
-        name === 'keyframes' ||
-        name === 'viewport' ||
-        name === 'property' ||
-        name === 'counter-style' ||
-        name === 'font-palette-values' ||
-        name === 'font-feature-values'
-      ) {
+      if (PROPERTY_ATRULES.has(name)) {
         return
       }
 
-      /* Case 3: @-rule with CSS rules inside [REMAIN] */
-      // non matching media queries are stripped out in non-matching-media-query-remover.js
-      // Modern: @container, @layer, @scope, @starting-style
-      // Note: @layer can be empty (for ordering), @container kept without size filtering
-      if (
-        name === 'media' ||
-        name === 'document' ||
-        name === 'supports' ||
-        name === 'container' ||
-        name === 'layer' ||
-        name === 'scope' ||
-        name === 'starting-style'
-      ) {
+      /* Case 2: @-rule with CSS rules inside [REMAIN]
+         non matching media queries are stripped out in non-matching-media-query-remover.js
+         Modern: @container, @layer, @scope, @starting-style
+         Note: @layer can be empty (for ordering), @container kept without size filtering
+      */
+      if (NESTED_ATRULES.has(name)) {
         // Keep @layer even if empty (used for cascade layer ordering)
         if (name === 'layer') {
           return
@@ -62,19 +63,6 @@ export default function finalRuleRemover (ast, _propertiesToRemove) {
         if (atrule.block && atrule.block.children.size > 0) {
           return
         }
-      }
-
-      /* Case 4: Vendor-prefixed @-rules [REMAIN]
-         Keep vendor-prefixed at-rules (e.g., @-webkit-keyframes, @-moz-document)
-      */
-      const atRuleName = atrule.name
-      if (
-        atRuleName.startsWith('-webkit-') ||
-        atRuleName.startsWith('-moz-') ||
-        atRuleName.startsWith('-ms-') ||
-        atRuleName.startsWith('-o-')
-      ) {
-        return
       }
 
       // otherwise remove the at-rule

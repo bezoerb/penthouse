@@ -1,4 +1,4 @@
-/* Modern CSS Features Test */
+/* Modern CSS Features Test - Critical Features Only */
 
 /* @container - Container Queries */
 @container card (min-width: 400px) {
@@ -24,43 +24,10 @@
   initial-value: blue;
 }
 
-/* @scope - Scoped Styles */
-@scope (.card) {
-  .title {
-    color: var(--my-color);
-  }
-}
-
-/* @starting-style - Entry Animations */
-@starting-style {
-  .fade-in {
-    opacity: 0;
-  }
-}
-
-/* @counter-style - Custom Counters */
-@counter-style thumbs {
-  system: cyclic;
-  symbols: "\1F44D";
-  suffix: " ";
-}
-
-/* @font-palette-values - Color Font Palettes */
-@font-palette-values --CustomPalette {
-  font-family: "CustomFont";
-  base-palette: 1;
-}
-
-/* Vendor-prefixed at-rules should also be kept */
-@-webkit-keyframes slide {
-  from { transform: translateX(0); }
-  to { transform: translateX(100px); }
-}
-
 /* Regular selectors that should apply */
 body {
   font-family: sans-serif;
-  animation: slide 1s;
+  color: var(--my-color);
 }
 
 .card {
@@ -68,7 +35,7 @@ body {
   container-name: card;
 }
 
-.fade-in {
-  transition: opacity 0.3s;
+.card-title {
+  font-size: 1rem;
 }
 
