@@ -130,7 +130,9 @@ describe("extra tests for penthouse node module", () => {
   });
 
   it("should keep chromium browser instance open, if requested", async () => {
-    browserPromiseForUnstableKeepOpenTests = puppeteer.launch();
+    browserPromiseForUnstableKeepOpenTests = puppeteer.launch({
+      args: ['--no-sandbox'],
+    });
     try {
       await penthouse({
         url: page1FileUrl,
