@@ -67,7 +67,9 @@ describe("extra tests for penthouse node module", () => {
   it("should use the browser given in options", async () => {
     let browserUsed = false;
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox'],
+    });
 
     // Spy on browser.pages method as a means to see if this browser instance
     // is used
