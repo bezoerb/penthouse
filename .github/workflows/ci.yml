@@ -46,10 +46,11 @@ jobs:
             libxrandr2 \
             libgbm1 \
             libxss1 \
-            libasound2 \
             libatspi2.0-0 \
             libgtk-3-0 \
             graphicsmagick
+          # Handle time_t transition packages
+          sudo apt-get install -y libasound2 || sudo apt-get install -y libasound2t64
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
