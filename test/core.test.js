@@ -228,4 +228,68 @@ describe('penthouse core tests', () => {
         }
       })
   })
+
+  /* ==Modern CSS Features== */
+  it('should keep modern CSS features (@container, @layer, @property, @scope, @starting-style)', () => {
+    var modernCssFilePath = path.join(__dirname, 'static-server', 'modern-css-features.css')
+    var modernCss = read(modernCssFilePath).toString()
+
+    return penthouse({
+      url: staticServerFileUrl('modern-css-features.html'),
+      css: modernCssFilePath
+    })
+      .then(result => {
+        // Verify all modern CSS features are kept
+        expect(result).toContain('@container')
+        expect(result).toContain('@layer')
+        expect(result).toContain('@property')
+        expect(result).toContain('@scope')
+        expect(result).toContain('@starting-style')
+        expect(result).toContain('@counter-style')
+        expect(result).toContain('@font-palette-values')
+        // Verify vendor-prefixed at-rules are kept
+        expect(result).toContain('@-webkit-keyframes')
+      })
+  })
+
+  it('should keep empty @layer declarations for cascade ordering', () => {
+    const cssWithEmptyLayer = '@layer reset, base, components; @layer components { .btn { color: blue; } } body { margin: 0; }'
+
+    return penthouse({
+      url: page1FileUrl,
+      cssString: cssWithEmptyLayer
+    })
+      .then(result => {
+        // Empty @layer declaration should be kept (css-tree outputs it as comma-separated list)
+        expect(result).toContain('@layer reset,base,components')
+        expect(result).toContain('@layer components')
+      })
+  })
+
+  it('should keep all @container queries without size filtering', () => {
+    // Test that container queries are kept regardless of size
+    const cssWithLargeContainer = `
+      #box1 { container-type: inline-size; container-name: card; }
+      @container card (min-width: 5000px) {
+        #box1 { font-size: 3rem; }
+      }
+      @container card (min-width: 200px) {
+        #box1 { font-size: 1rem; }
+      }
+    `
+
+    return penthouse({
+      url: page1FileUrl,
+      cssString: cssWithLargeContainer,
+      width: 1300,
+      height: 900
+    })
+      .then(result => {
+        // Both small and large container queries should be kept
+        // (they both apply to #box1 which is in page1.html)
+        expect(result).toContain('@container')
+        expect(result).toContain('5000px')
+        expect(result).toContain('200px')
+      })
+  })
 })
