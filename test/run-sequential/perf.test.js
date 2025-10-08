@@ -37,7 +37,9 @@ const FIXTURES = [
 ];
 
 describe("performance tests for penthouse", () => {
-  const browserPromise = puppeteer.launch();
+  const browserPromise = puppeteer.launch({
+    args: ['--no-sandbox'],
+  });
 
   let testsCompleted = 0;
   FIXTURES.forEach(({ name, threshold }) => {
