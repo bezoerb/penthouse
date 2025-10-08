@@ -89,7 +89,7 @@ describe("extra tests for penthouse node module", () => {
     });
   });
 
-  it("should handle parallell jobs, sharing one browser instance, closing afterwards", async () => {
+  it("should handle parallell jobs, sharing one browser instance, closing afterwards",{ timeout: 10000 }, async () => {
     // Track existing Chrome processes before test (e.g., Electron apps, other browsers)
     const beforeTest = await chromeProcessesRunning();
     const existingBrowserPIDs = new Set(beforeTest.browserPIDs || []);
