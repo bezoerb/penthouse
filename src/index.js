@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import debug from 'debug'
-import { asyncExitHook, gracefulExit } from 'exit-hook'
 
 import generateCriticalCss from './core.js'
 import {
@@ -15,17 +14,6 @@ import {
 } from './browser.js'
 
 const debuglog = debug('penthouse')
-
-// Register graceful shutdown handler for browser cleanup
-// asyncExitHook(
-//   async () => {
-//     debuglog('exit hook: closing browser')
-//     await closeBrowser({ forceClose: true })
-//   },
-//   {
-//     wait: 2000 // Give browser 2 seconds to close gracefully
-//   }
-// )
 
 const DEFAULT_VIEWPORT_WIDTH = 1300 // px
 const DEFAULT_VIEWPORT_HEIGHT = 900 // px

@@ -6,8 +6,6 @@ export default defineConfig({
     environment: 'node',
     include: ['test/**/*.test.js'],
     teardownTimeout: 2000,
-    // Run each test file in its own process for proper isolation
-    // This ensures exit-hook fires between test files
     pool: 'forks',
     poolOptions: {
       forks: {

@@ -43,7 +43,6 @@
     "css-mediaquery": "^0.1.2",
     "css-tree": "3.1.0",
     "debug": "^4.4.3",
-    "exit-hook": "^4.0.0",
     "jsesc": "^3.1.0",
     "puppeteer": "^24.22.3"
   },
