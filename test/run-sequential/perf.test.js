@@ -34,12 +34,18 @@ const FIXTURES = [
 ];
 
 describe("performance tests for penthouse", () => {
+  // CI runners (esp. GitHub-hosted) have variable, generally slower CPU than
+  // local dev machines. Use a multiplier so thresholds stay meaningful locally
+  // without producing flaky failures in CI.
+  const CI_THRESHOLD_MULTIPLIER = process.env.CI ? 1.5 : 1;
+
   const browserPromise = puppeteer.launch({
     args: ["--no-sandbox"],
   });
 
   let testsCompleted = 0;
   FIXTURES.forEach(({ name, threshold }) => {
+    const adjustedThreshold = Math.round(threshold * CI_THRESHOLD_MULTIPLIER);
     // forbesindustries has malformed HTML (64KB single line), needs pageLoadSkipTimeout
     const timeout = name === "forbesindustries" ? 15000 : 10000;
     const penthouseOptions = {
@@ -54,7 +60,7 @@ describe("performance tests for penthouse", () => {
       penthouseOptions.pageLoadSkipTimeout = 5000;
     }
 
-    it(`Penthouse should handle ${name} in less than ${threshold / 1000}s`, { timeout }, () => {
+    it(`Penthouse should handle ${name} in less than ${adjustedThreshold / 1000}s`, { timeout }, () => {
       const start = Date.now();
       return penthouse(penthouseOptions).then((result) => {
         testsCompleted++;
@@ -62,7 +68,7 @@ describe("performance tests for penthouse", () => {
           console.log("close shared browser after performance tests");
           browserPromise.then((browser) => browser.close());
         }
-        expect(Date.now() - start).toBeLessThan(threshold);
+        expect(Date.now() - start).toBeLessThan(adjustedThreshold);
       });
     });
   });
