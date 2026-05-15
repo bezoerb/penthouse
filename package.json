@@ -23,13 +23,14 @@
       "import": "./src/index.js"
     }
   },
+  "packageManager": "pnpm@10.11.0",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
     "lint": "oxlint src",
     "test": "vitest run test/core.test.js",
-    "test-all": "vitest run test/*.test.js && yarn test-extra && yarn test-perf",
+    "test-all": "vitest run test/*.test.js && pnpm test-extra && pnpm test-perf",
     "test-perf": "vitest run test/run-sequential/perf.test.js",
     "test-extra": "vitest run test/run-sequential/node-module.test.js",
     "prepare": "husky"
