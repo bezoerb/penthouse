@@ -1,47 +1,39 @@
-import * as csstree from 'css-tree'
-import debug from 'debug'
-import pruneNonCriticalSelectors from './browser-sandbox/pruneNonCriticalSelectors.js'
-import replacePageCss from './browser-sandbox/replacePageCss.js'
-import cleanupAst from './postformatting/index.js'
-import buildSelectorProfile from './selectors-profile.js'
-import nonMatchingMediaQueryRemover from './non-matching-media-query-remover.js'
+import * as csstree from "css-tree";
+import debug from "debug";
+import pruneNonCriticalSelectors from "./browser-sandbox/pruneNonCriticalSelectors.js";
+import replacePageCss from "./browser-sandbox/replacePageCss.js";
+import cleanupAst from "./postformatting/index.js";
+import buildSelectorProfile from "./selectors-profile.js";
+import nonMatchingMediaQueryRemover from "./non-matching-media-query-remover.js";
 
-const debuglog = debug('penthouse:core')
+const debuglog = debug("penthouse:core");
 
-const PUPPETEER_PAGE_UNLOADED_DURING_EXECUTION_ERROR_REGEX = /(Cannot find context with specified id|Execution context was destroyed)/
+export const PUPPETEER_PAGE_UNLOADED_DURING_EXECUTION_ERROR_REGEX =
+  /(Cannot find context with specified id|Execution context was destroyed)/;
 export const PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE =
-  'PAGE_UNLOADED_DURING_EXECUTION: Critical css generation script could not be executed.\n\nThis can happen if Penthouse was killed during execution, OR otherwise most commonly if the page navigates away after load, via setting window.location, meta tag refresh directive or similar. For the critical css generation to work the loaded page must stay: remove any redirects or move them to the server. You can also disable them on your end just for the critical css generation, for example via a query parameter.'
+  "PAGE_UNLOADED_DURING_EXECUTION: Critical css generation script could not be executed.\n\nThis can happen if Penthouse was killed during execution, OR otherwise most commonly if the page navigates away after load, via setting window.location, meta tag refresh directive or similar. For the critical css generation to work the loaded page must stay: remove any redirects or move them to the server. You can also disable them on your end just for the critical css generation, for example via a query parameter.";
 
-async function blockinterceptedRequests (interceptedRequest) {
+async function blockinterceptedRequests(interceptedRequest) {
   try {
-    const isJsRequest = /\.js(\?.*)?$/.test(interceptedRequest.url())
+    const isJsRequest = /\.js(\?.*)?$/.test(interceptedRequest.url());
     if (isJsRequest) {
-      await interceptedRequest.abort()
+      await interceptedRequest.abort();
     } else {
-      await interceptedRequest.continue()
+      await interceptedRequest.continue();
     }
   } catch (err) {
-    debuglog(
-      'blockinterceptedRequests failed, but we ignore this: ' + err.toString()
-    )
+    debuglog("blockinterceptedRequests failed, but we ignore this: " + err.toString());
   }
 }
 
-function loadPage (
-  page,
-  url,
-  pageGotoOptions,
-  timeout,
-  pageLoadSkipTimeout,
-  allowedResponseCode
-) {
-  debuglog('page load start')
-  let waitingForPageLoad = true
-  let loadPagePromise = page.goto(url, pageGotoOptions)
+function loadPage(page, url, pageGotoOptions, timeout, pageLoadSkipTimeout, allowedResponseCode) {
+  debuglog("page load start");
+  let waitingForPageLoad = true;
+  let loadPagePromise = page.goto(url, pageGotoOptions);
   if (pageLoadSkipTimeout) {
     loadPagePromise = Promise.race([
       loadPagePromise,
-      new Promise(resolve => {
+      new Promise((resolve) => {
         // _abort_ page load after X time,
         // in order to deal with spammy pages that keep sending non-critical requests
         // (tracking etc), which would otherwise never load.
@@ -49,85 +41,75 @@ function loadPage (
         // for critical viewport.
         setTimeout(() => {
           if (waitingForPageLoad) {
-            debuglog(
-              'page load waiting ABORTED after ' +
-                pageLoadSkipTimeout / 1000 +
-                's. '
-            )
-            resolve()
+            debuglog("page load waiting ABORTED after " + pageLoadSkipTimeout / 1000 + "s. ");
+            resolve();
           }
-        }, pageLoadSkipTimeout)
-      })
-    ])
+        }, pageLoadSkipTimeout);
+      }),
+    ]);
   }
-  return loadPagePromise.then(response => {
-    if (typeof allowedResponseCode !== 'undefined') {
-      checkResponseStatus(allowedResponseCode, response)
+  return loadPagePromise.then((response) => {
+    if (typeof allowedResponseCode !== "undefined") {
+      checkResponseStatus(allowedResponseCode, response);
     }
 
-    waitingForPageLoad = false
-    debuglog('page load DONE')
-  })
+    waitingForPageLoad = false;
+    debuglog("page load DONE");
+  });
 }
 
-function checkResponseStatus (allowedResponseCode, response) {
-  var errorMessage
-  if (
-    typeof allowedResponseCode === 'number' &&
-    response.status() !== allowedResponseCode
-  ) {
-    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode: ${allowedResponseCode}.`
+function checkResponseStatus(allowedResponseCode, response) {
+  var errorMessage;
+  if (typeof allowedResponseCode === "number" && response.status() !== allowedResponseCode) {
+    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode: ${allowedResponseCode}.`;
   } else if (
-    typeof allowedResponseCode === 'object' &&
-    allowedResponseCode.constructor.name === 'RegExp' &&
-    !response
-      .status()
-      .toString()
-      .match(allowedResponseCode)
+    typeof allowedResponseCode === "object" &&
+    allowedResponseCode.constructor.name === "RegExp" &&
+    !response.status().toString().match(allowedResponseCode)
   ) {
-    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode: ${allowedResponseCode.toString()}.`
+    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode: ${allowedResponseCode.toString()}.`;
   } else if (
-    typeof allowedResponseCode === 'function' &&
+    typeof allowedResponseCode === "function" &&
     !allowedResponseCode.call(this, response)
   ) {
-    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode.`
+    errorMessage = `Server response status ${response.status()} isn't matching allowedResponseCode.`;
   }
 
   if (errorMessage) {
-    throw new Error(errorMessage)
+    throw new Error(errorMessage);
   }
 }
 
-function setupBlockJsRequests (page) {
-  page.on('request', blockinterceptedRequests)
-  return page.setRequestInterception(true)
+function setupBlockJsRequests(page) {
+  page.on("request", blockinterceptedRequests);
+  return page.setRequestInterception(true);
 }
 
-async function astFromCss ({ cssString, strict }) {
+async function astFromCss({ cssString, strict }) {
   // breaks puppeteer
-  const css = cssString.replace(/￿/g, '\f042')
+  const css = cssString.replace(/￿/g, "\f042");
 
-  const parsingErrors = []
-  debuglog('parse ast START')
+  const parsingErrors = [];
+  debuglog("parse ast START");
   const ast = csstree.parse(css, {
-    onParseError: error => parsingErrors.push(error.formattedMessage)
-  })
-  debuglog(`parse ast DONE (with ${parsingErrors.length} errors)`)
+    onParseError: (error) => parsingErrors.push(error.formattedMessage),
+  });
+  debuglog(`parse ast DONE (with ${parsingErrors.length} errors)`);
 
   if (parsingErrors.length && strict === true) {
     // NOTE: only informing about first error, even if there were more than one.
-    const parsingErrorMessage = parsingErrors[0]
+    const parsingErrorMessage = parsingErrors[0];
     throw new Error(
       `AST parser (css-tree) found ${parsingErrors.length} errors in CSS.
       Breaking because in strict mode.
       The first error was:
-      ` + parsingErrorMessage
-    )
+      ` + parsingErrorMessage,
+    );
   }
-  return ast
+  return ast;
 }
 
-async function preparePage ({
+async function preparePage({
   page,
   pagePromise,
   width,
@@ -137,65 +119,57 @@ async function preparePage ({
   customPageHeaders,
   blockJSRequests,
   cleanupAndExit,
-  getHasExited
+  getHasExited,
 }) {
-  let reusedPage
+  let reusedPage;
   try {
-    const pagePromiseResult = await pagePromise
-    page = pagePromiseResult.page
-    reusedPage = pagePromiseResult.reused
+    const pagePromiseResult = await pagePromise;
+    page = pagePromiseResult.page;
+    reusedPage = pagePromiseResult.reused;
   } catch (e) {
-    debuglog('unexpected: could not get an open browser page' + e)
-    return
+    debuglog("unexpected: could not get an open browser page" + e);
+    return;
   }
   // we already exited while page was opening, stop execution
   // (strict mode ast css parsing erros)
   if (getHasExited()) {
-    return
+    return;
   }
-  debuglog('open page ready in browser')
+  debuglog("open page ready in browser");
 
   // We set the viewport size in the browser when it launches,
   // and then re-use it for each page (to avoid extra work).
   // Only if later pages use a different viewport size do we need to
   // update it here.
-  let setViewportPromise = Promise.resolve()
-  const currentViewport = page.viewport()
-  if (
-    !currentViewport ||
-    currentViewport.width !== width ||
-    currentViewport.height !== height
-  ) {
+  let setViewportPromise = Promise.resolve();
+  const currentViewport = page.viewport();
+  if (!currentViewport || currentViewport.width !== width || currentViewport.height !== height) {
     setViewportPromise = page
       .setViewport({ width, height })
-      .then(() => debuglog('viewport size updated'))
+      .then(() => debuglog("viewport size updated"));
   }
 
-  const setUserAgentPromise = page
-    .setUserAgent(userAgent)
-    .then(() => debuglog('userAgent set'))
+  const setUserAgentPromise = page.setUserAgent(userAgent).then(() => debuglog("userAgent set"));
 
-  let setCustomPageHeadersPromise = Promise.resolve()
+  let setCustomPageHeadersPromise = Promise.resolve();
   if (customPageHeaders && Object.keys(customPageHeaders).length) {
     try {
       setCustomPageHeadersPromise = page
         .setExtraHTTPHeaders(customPageHeaders)
-        .then(() =>
-          debuglog('customPageHeaders set:' + JSON.stringify(customPageHeaders))
-        )
+        .then(() => debuglog("customPageHeaders set:" + JSON.stringify(customPageHeaders)));
     } catch (e) {
-      debuglog('failed setting extra http headers: ' + e)
+      debuglog("failed setting extra http headers: " + e);
     }
   }
 
-  let setCookiesPromise = Promise.resolve()
+  let setCookiesPromise = Promise.resolve();
   if (cookies) {
     try {
       setCookiesPromise = page
         .setCookie(...cookies)
-        .then(() => debuglog('cookie(s) set: ' + JSON.stringify(cookies)))
+        .then(() => debuglog("cookie(s) set: " + JSON.stringify(cookies)));
     } catch (e) {
-      debuglog('failed to set cookies: ' + e)
+      debuglog("failed to set cookies: " + e);
     }
   }
 
@@ -205,77 +179,67 @@ async function preparePage ({
       setViewportPromise,
       setUserAgentPromise,
       setCustomPageHeadersPromise,
-      setCookiesPromise
+      setCookiesPromise,
     ]).then(() => {
-      debuglog('preparePage DONE')
-      return page
-    })
+      debuglog("preparePage DONE");
+      return page;
+    });
   }
 
   // disable Puppeteer navigation timeouts;
   // Penthouse tracks these internally instead.
-  page.setDefaultNavigationTimeout(0)
+  page.setDefaultNavigationTimeout(0);
 
-  let blockJSRequestsPromise
+  let blockJSRequestsPromise;
   if (blockJSRequests) {
     // NOTE: with JS disabled we cannot use JS timers inside page.evaluate
     // (setTimeout, setInterval), however requestAnimationFrame works.
     blockJSRequestsPromise = Promise.all([
       page.setJavaScriptEnabled(false),
-      setupBlockJsRequests(page)
+      setupBlockJsRequests(page),
     ]).then(() => {
-      debuglog('blocking js requests DONE')
-    })
+      debuglog("blocking js requests DONE");
+    });
   }
 
-  page.on('error', error => {
-    debuglog('page error: ' + error)
-    cleanupAndExit({ error })
-  })
-  page.on('console', msg => {
-    const text = msg.text
-      ? typeof msg.text === 'function'
-        ? msg.text()
-        : msg.text
-      : msg
+  page.on("error", (error) => {
+    debuglog("page error: " + error);
+    cleanupAndExit({ error });
+  });
+  page.on("console", (msg) => {
+    const text = msg.text ? (typeof msg.text === "function" ? msg.text() : msg.text) : msg;
     // pass through log messages
     // - the ones sent by penthouse for debugging has 'debug: ' prefix.
-    if (text.startsWith('debug: ')) {
-      debuglog(text.replace(/^debug: /, ''))
+    if (text.startsWith("debug: ")) {
+      debuglog(text.replace(/^debug: /, ""));
     }
-  })
-  debuglog('page event listeners set')
+  });
+  debuglog("page event listeners set");
 
   return Promise.all([
     setViewportPromise,
     setUserAgentPromise,
     setCustomPageHeadersPromise,
     setCookiesPromise,
-    blockJSRequestsPromise
+    blockJSRequestsPromise,
   ]).then(() => {
-    debuglog('preparePage DONE')
-    return page
-  })
+    debuglog("preparePage DONE");
+    return page;
+  });
 }
 
-async function grabPageScreenshot ({
-  type,
-  page,
-  screenshots,
-  screenshotExtension,
-  debuglog
-}) {
-  const path = screenshots.basePath + `-${type}` + screenshotExtension
-  debuglog(`take ${type} screenshot, START`)
+async function grabPageScreenshot({ type, page, screenshots, screenshotExtension, debuglog }) {
+  const path = screenshots.basePath + `-${type}` + screenshotExtension;
+  debuglog(`take ${type} screenshot, START`);
   return page
     .screenshot({
       ...screenshots,
-      path
+      path,
     })
-    .then(() => debuglog(`take ${type} screenshot DONE, path: ${path}`))
+    .then(() => debuglog(`take ${type} screenshot DONE, path: ${path}`));
 }
 
-async function pruneNonCriticalCssLauncher ({
+async function pruneNonCriticalCssLauncher({
   pagePromise,
   url,
   pageGotoOptions,
@@ -298,72 +262,67 @@ async function pruneNonCriticalCssLauncher ({
   keepLargerMediaQueries,
   maxElementsToCheckPerSelector,
   _unstableKeepBrowserAlive,
-  allowedResponseCode
+  allowedResponseCode,
 }) {
-  let _hasExited = false
+  let _hasExited = false;
   // hacky to get around _hasExited only available in the scope of this function
-  const getHasExited = () => _hasExited
+  const getHasExited = () => _hasExited;
 
-  const takeScreenshots = screenshots && screenshots.basePath
-  const screenshotExtension =
-    takeScreenshots && screenshots.type === 'jpeg' ? '.jpg' : '.png'
+  const takeScreenshots = screenshots && screenshots.basePath;
+  const screenshotExtension = takeScreenshots && screenshots.type === "jpeg" ? ".jpg" : ".png";
 
   // NOTE: would need a refactor to killTimeout logic to be able to remove promise here.
   /* eslint-disable no-async-promise-executor */
   return new Promise(async (resolve, reject) => {
     /* eslint-enable no-async-promise-executor */
-    debuglog('Penthouse core start')
-    let page = null
-    let killTimeout = null
+    debuglog("Penthouse core start");
+    let page = null;
+    let killTimeout = null;
     const cleanupAndExit = async ({ error, returnValue }) => {
       if (_hasExited) {
-        return
+        return;
       }
-      debuglog('cleanupAndExit')
-      _hasExited = true
-      clearTimeout(killTimeout)
+      debuglog("cleanupAndExit");
+      _hasExited = true;
+      clearTimeout(killTimeout);
 
       if (error) {
-        return reject(error)
+        return reject(error);
       }
 
       if (page) {
-        const resetPromises = []
+        const resetPromises = [];
         // reset page headers and cookies,
         // since we re-use the page
         if (customPageHeaders && Object.keys(customPageHeaders).length) {
           try {
             resetPromises.push(
-              page
-                .setExtraHTTPHeaders({})
-                .then(() => debuglog('customPageHeaders reset'))
-            )
+              page.setExtraHTTPHeaders({}).then(() => debuglog("customPageHeaders reset")),
+            );
           } catch (e) {
-            debuglog('failed resetting extra http headers: ' + e)
+            debuglog("failed resetting extra http headers: " + e);
           }
         }
         // reset cookies
         if (cookies && cookies.length) {
           try {
             resetPromises.push(
-              page
-                .deleteCookie(...cookies)
-                .then(() => debuglog('cookie(s) reset: '))
-            )
+              page.deleteCookie(...cookies).then(() => debuglog("cookie(s) reset: ")),
+            );
           } catch (e) {
-            debuglog('failed to reset cookies: ' + e)
+            debuglog("failed to reset cookies: " + e);
           }
         }
-        await Promise.all(resetPromises)
+        await Promise.all(resetPromises);
       }
 
-      return resolve(returnValue)
-    }
+      return resolve(returnValue);
+    };
     killTimeout = setTimeout(() => {
       void cleanupAndExit({
-        error: new Error('Penthouse timed out after ' + timeout / 1000 + 's. ')
-      })
-    }, timeout)
+        error: new Error("Penthouse timed out after " + timeout / 1000 + "s. "),
+      });
+    }, timeout);
 
     // ensure there is no uncaughtException
     try {
@@ -378,34 +337,34 @@ async function pruneNonCriticalCssLauncher ({
         customPageHeaders,
         blockJSRequests,
         cleanupAndExit,
-        getHasExited
-      })
+        getHasExited,
+      });
 
       // 2. parse ast
       // -> [BLOCK FOR] AST parsing
-      let ast
+      let ast;
       try {
         ast = await astFromCss({
           cssString,
-          strict
-        })
+          strict,
+        });
       } catch (e) {
-        void cleanupAndExit({ error: e })
-        return
+        void cleanupAndExit({ error: e });
+        return;
       }
 
       // 3. Further process the ast [BLOCKING]
       // Strip out non matching media queries.
       // Need to be done before buildSelectorProfile;
       // (very fast but could be done together/in parallel in future)
-      nonMatchingMediaQueryRemover(ast, width, height, keepLargerMediaQueries)
-      debuglog('stripped out non matching media queries')
+      nonMatchingMediaQueryRemover(ast, width, height, keepLargerMediaQueries);
+      debuglog("stripped out non matching media queries");
 
       // -> [BLOCK FOR] page preparation
-      page = await updatedPagePromise
+      page = await updatedPagePromise;
       if (!page) {
-        void cleanupAndExit({ error: 'Could not open page in browser' })
-        return
+        void cleanupAndExit({ error: "Could not open page in browser" });
+        return;
       }
 
       // load the page (slow) [NOT BLOCKING]
@@ -415,34 +374,34 @@ async function pruneNonCriticalCssLauncher ({
         pageGotoOptions,
         timeout,
         pageLoadSkipTimeout,
-        allowedResponseCode
-      )
+        allowedResponseCode,
+      );
 
       // turn css to formatted selectorlist [NOT BLOCKING]
-      debuglog('turn css to formatted selectorlist START')
+      debuglog("turn css to formatted selectorlist START");
       const buildSelectorProfilePromise = buildSelectorProfile(
         ast,
         forceInclude && forceInclude.length ? forceInclude : null,
-        forceExclude && forceExclude.length ? forceExclude : null
-      ).then(res => {
-        debuglog('turn css to formatted selectorlist DONE')
-        return res
-      })
+        forceExclude && forceExclude.length ? forceExclude : null,
+      ).then((res) => {
+        debuglog("turn css to formatted selectorlist DONE");
+        return res;
+      });
 
       // -> [BLOCK FOR] page load
       try {
-        await loadPagePromise
+        await loadPagePromise;
       } catch (e) {
-        void cleanupAndExit({ error: e })
-        return
+        void cleanupAndExit({ error: e });
+        return;
       }
       if (!page) {
         // in case we timed out
-        debuglog('page load TIMED OUT')
-        void cleanupAndExit({ error: new Error('Page load timed out') })
-        return
+        debuglog("page load TIMED OUT");
+        void cleanupAndExit({ error: new Error("Page load timed out") });
+        return;
       }
-      if (_hasExited) return
+      if (_hasExited) return;
 
       // Penthouse waits for the `load` event to fire
       // (before loadPagePromise resolves; except for very slow loading pages)
@@ -462,63 +421,62 @@ async function pruneNonCriticalCssLauncher ({
       // In future probably deprecate and allow for a custom function instead (returning a promise).
 
       // -> [BLOCK FOR] renderWaitTime - needs to be done before we take any screenshots
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         setTimeout(() => {
-          debuglog('waited for renderWaitTime: ' + renderWaitTime)
-          resolve()
-        }, renderWaitTime)
-      })
+          debuglog("waited for renderWaitTime: " + renderWaitTime);
+          resolve();
+        }, renderWaitTime);
+      });
 
       // take before screenshot (optional) [NOT BLOCKING]
       const beforeScreenshotPromise = takeScreenshots
         ? grabPageScreenshot({
-            type: 'before',
+            type: "before",
             page,
             screenshots,
             screenshotExtension,
-            debuglog
+            debuglog,
           })
-        : Promise.resolve()
+        : Promise.resolve();
 
       // -> [BLOCK FOR] css into formatted selectors list with "sourcemap"
       // latter used to map back to full css rule
-      const { selectors, selectorNodeMap } = await buildSelectorProfilePromise
+      const { selectors, selectorNodeMap } = await buildSelectorProfilePromise;
 
       if (getHasExited()) {
-        return
+        return;
       }
 
       // -> [BLOCK FOR] critical css selector pruning (in browser)
-      let criticalSelectors
+      let criticalSelectors;
       try {
         criticalSelectors = await page
           .evaluate(pruneNonCriticalSelectors, {
             selectors,
             renderWaitTime,
-            maxElementsToCheckPerSelector
+            maxElementsToCheckPerSelector,
           })
-          .then(criticalSelectors => {
-            debuglog('pruneNonCriticalSelectors done')
-            return criticalSelectors
-          })
+          .then((criticalSelectors) => {
+            debuglog("pruneNonCriticalSelectors done");
+            return criticalSelectors;
+          });
       } catch (err) {
-        debuglog('pruneNonCriticalSelector threw an error: ' + err)
-        const errorDueToPageUnloaded = PUPPETEER_PAGE_UNLOADED_DURING_EXECUTION_ERROR_REGEX.test(
-          err
-        )
+        debuglog("pruneNonCriticalSelector threw an error: " + err);
+        const errorDueToPageUnloaded =
+          PUPPETEER_PAGE_UNLOADED_DURING_EXECUTION_ERROR_REGEX.test(err);
         void cleanupAndExit({
           error: errorDueToPageUnloaded
             ? new Error(PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE)
-            : err
-        })
-        return
+            : err,
+        });
+        return;
       }
       if (getHasExited()) {
-        return
+        return;
       }
 
       // -> [BLOCK FOR] clean up final ast for critical css
-      debuglog('AST cleanup START')
+      debuglog("AST cleanup START");
 
       // NOTE: this function mutates the AST
       cleanupAst({
@@ -526,36 +484,36 @@ async function pruneNonCriticalCssLauncher ({
         selectorNodeMap,
         criticalSelectors,
         propertiesToRemove,
-        maxEmbeddedBase64Length
-      })
-      debuglog('AST cleanup DONE')
+        maxEmbeddedBase64Length,
+      });
+      debuglog("AST cleanup DONE");
 
       // -> [BLOCK FOR] generate final critical css from critical ast
-      const css = csstree.generate(ast)
-      debuglog('generated CSS from AST')
+      const css = csstree.generate(ast);
+      debuglog("generated CSS from AST");
 
       // take after screenshot (optional) [BLOCKING]
       if (takeScreenshots) {
         // wait for the before screenshot, before start modifying the page
-        await beforeScreenshotPromise
-        debuglog('inline critical styles for after screenshot')
+        await beforeScreenshotPromise;
+        debuglog("inline critical styles for after screenshot");
         await page.evaluate(replacePageCss, { css }).then(() => {
           return grabPageScreenshot({
-            type: 'after',
+            type: "after",
             page,
             screenshots,
             screenshotExtension,
-            debuglog
-          })
-        })
+            debuglog,
+          });
+        });
       }
-      debuglog('generateCriticalCss DONE')
+      debuglog("generateCriticalCss DONE");
 
-      void cleanupAndExit({ returnValue: css })
+      void cleanupAndExit({ returnValue: css });
     } catch (err) {
-      reject(err)
+      reject(err);
     }
-  })
+  });
 }
 
-export default pruneNonCriticalCssLauncher
+export default pruneNonCriticalCssLauncher;
