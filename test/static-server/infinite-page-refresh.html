@@ -7,10 +7,16 @@
     <meta name="robots" content="noindex">
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <!--
-    The next meta makes critical (or puppeteer) throw:
-    Protocol error (Runtime.callFunctionOn): Cannot find context with specified id undefined
+    Continuously navigate to ensure the execution context is destroyed while
+    Penthouse's critical-CSS generation script is running. This makes the
+    test deterministic across local and CI environments where timing differs.
+    Triggers puppeteer's "Cannot find context" / "Execution context was destroyed".
     -->
     <meta http-equiv="refresh" content="0" />
+    <script>
+        // Keep navigating so a navigation lands inside penthouse's evaluate().
+        setInterval(function () { window.location.href = window.location.href + '?_=' + Date.now(); }, 50);
+    </script>
 </head>
 
 </html>
