@@ -18,14 +18,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          cache: true
 
       - name: Cache Puppeteer Chromium
         uses: actions/cache@v4
@@ -56,10 +53,16 @@ jobs:
           sudo apt-get install -y libasound2 || sudo apt-get install -y libasound2t64
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install --frozen-lockfile
 
       - name: Lint code
-        run: pnpm lint
+        run: vp lint src
 
       - name: Run tests
-        run: pnpm test-all
+        run: vp test run --exclude 'test/run-sequential/**'
+
+      - name: Run node-module tests
+        run: vp test run test/run-sequential/node-module.test.js
+
+      - name: Run performance tests
+        run: vp test run test/run-sequential/perf.test.js
