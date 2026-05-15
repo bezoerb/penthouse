@@ -37,7 +37,7 @@
   "scripts": {
     "lint": "vp lint src",
     "test": "vp test run test/core.test.js",
-    "test-all": "vp test run test/*.test.js && pnpm test-extra && pnpm test-perf",
+    "test-all": "vp test run --exclude 'test/run-sequential/**' && pnpm test-extra && pnpm test-perf",
     "test-perf": "vp test run test/run-sequential/perf.test.js",
     "test-extra": "vp test run test/run-sequential/node-module.test.js",
     "prepare": "vp config"
