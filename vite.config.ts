@@ -5,7 +5,7 @@ export default defineConfig({
     ignorePatterns: ["test/static-server/**"],
   },
   staged: {
-    "src/**/*.js": ["prettier-standard"],
+    "src/**/*.js": "vp check --fix",
   },
   lint: {
     rules: {
