@@ -1,8 +1,20 @@
 {
   "name": "penthouse",
-  "description": "Generate critical path CSS for web pages",
   "version": "2.3.3",
+  "description": "Generate critical path CSS for web pages",
+  "keywords": [
+    "CSS Critical Path Generator",
+    "build",
+    "chrome:headless",
+    "css",
+    "performance",
+    "tool"
+  ],
   "homepage": "https://github.com/pocketjoso/penthouse",
+  "bugs": {
+    "url": "https://github.com/pocketjoso/penthouse/issues"
+  },
+  "license": "MIT",
   "author": {
     "name": "Jonas Ohlsson Aden",
     "email": "jonas.sebastian.ohlsson@gmail.com",
@@ -12,10 +24,9 @@
     "type": "git",
     "url": "git://github.com/pocketjoso/penthouse.git#master"
   },
-  "bugs": {
-    "url": "https://github.com/pocketjoso/penthouse/issues"
-  },
-  "license": "MIT",
+  "files": [
+    "src"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -23,49 +34,31 @@
       "import": "./src/index.js"
     }
   },
-  "packageManager": "pnpm@10.11.0",
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
   "scripts": {
-    "lint": "oxlint src",
-    "test": "vitest run test/core.test.js",
-    "test-all": "vitest run test/*.test.js && pnpm test-extra && pnpm test-perf",
-    "test-perf": "vitest run test/run-sequential/perf.test.js",
-    "test-extra": "vitest run test/run-sequential/node-module.test.js",
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "src/**/*.js": [
-      "prettier-standard"
-    ]
+    "lint": "vp lint src",
+    "test": "vp test run test/core.test.js",
+    "test-all": "vp test run test/*.test.js && pnpm test-extra && pnpm test-perf",
+    "test-perf": "vp test run test/run-sequential/perf.test.js",
+    "test-extra": "vp test run test/run-sequential/node-module.test.js",
+    "prepare": "vp config"
   },
   "dependencies": {
     "css-mediaquery": "^0.1.2",
-    "css-tree": "3.1.0",
+    "css-tree": "3.2.1",
     "debug": "^4.4.3",
     "jsesc": "^3.1.0",
-    "puppeteer": "^24.22.3"
+    "puppeteer": "^25.0.2"
   },
   "devDependencies": {
     "gm": "^1.25.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.3",
-    "oxlint": "^1.18.0",
-    "prettier": "^3.6.2",
+    "prettier": "^3.8.3",
     "prettier-standard": "^16.4.1",
-    "rimraf": "^6.0.1",
-    "vitest": "^3.2.4"
+    "rimraf": "^6.1.3",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
-  "keywords": [
-    "CSS Critical Path Generator",
-    "css",
-    "performance",
-    "build",
-    "tool",
-    "chrome:headless"
-  ],
-  "files": [
-    "src"
-  ]
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "packageManager": "pnpm@10.11.0"
 }

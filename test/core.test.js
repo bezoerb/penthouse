@@ -1,266 +1,284 @@
-import { describe, it, expect } from 'vitest'
-import path from 'path'
-import penthouse from '../src/index.js'
-import { readFileSync as read } from 'fs'
-import normaliseCss from './util/normaliseCss.js'
+import { describe, it, expect } from "vite-plus/test";
+import path from "path";
+import penthouse from "../src/index.js";
+import { readFileSync as read } from "fs";
+import normaliseCss from "./util/normaliseCss.js";
 
-import { PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE } from '../src/core.js'
+import { PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE } from "../src/core.js";
 
-describe('penthouse core tests', () => {
-  function staticServerFileUrl (file) {
-    return 'file://' + path.join(process.env.PWD, 'test', 'static-server', file)
+describe("penthouse core tests", () => {
+  function staticServerFileUrl(file) {
+    return "file://" + path.join(process.env.PWD, "test", "static-server", file);
   }
-  var page1FileUrl = staticServerFileUrl('page1.html')
+  var page1FileUrl = staticServerFileUrl("page1.html");
 
-  it('should match exactly the css in the yeoman test', () => {
-    var yeomanFullCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'yeoman-full.css')
-    var yeomanExpectedCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'yeoman-medium--expected.css')
-    var yeomanExpectedCss = read(yeomanExpectedCssFilePath).toString()
+  it("should match exactly the css in the yeoman test", () => {
+    var yeomanFullCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "yeoman-full.css",
+    );
+    var yeomanExpectedCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "yeoman-medium--expected.css",
+    );
+    var yeomanExpectedCss = read(yeomanExpectedCssFilePath).toString();
 
     return penthouse({
-      url: staticServerFileUrl('yeoman.html'),
+      url: staticServerFileUrl("yeoman.html"),
       css: yeomanFullCssFilePath,
       width: 800,
-      height: 450
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(yeomanExpectedCss))
-      })
-  })
+      height: 450,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(yeomanExpectedCss));
+    });
+  });
 
-  it('should remove non critical selectors from individual rules', () => {
-    var testFixtureCss = read(path.join(__dirname, 'static-server', 'rm-non-critical-selectors.css')).toString()
-    var expected = read(path.join(__dirname, 'static-server', 'rm-non-critical-selectors--expected.css')).toString()
-
-    return penthouse({
-      url: page1FileUrl,
-      cssString: testFixtureCss
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(expected))
-      })
-  })
-
-  it('should keep :before, :after, :visited rules (because el above fold)', () => {
-    var pseudoRemainCssFilePath = path.join(__dirname, 'static-server', 'psuedo--remain.css')
-    var pseudoRemainCss = read(pseudoRemainCssFilePath).toString()
+  it("should remove non critical selectors from individual rules", () => {
+    var testFixtureCss = read(
+      path.join(__dirname, "static-server", "rm-non-critical-selectors.css"),
+    ).toString();
+    var expected = read(
+      path.join(__dirname, "static-server", "rm-non-critical-selectors--expected.css"),
+    ).toString();
 
     return penthouse({
       url: page1FileUrl,
-      css: pseudoRemainCssFilePath
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(pseudoRemainCss))
-      })
-  })
+      cssString: testFixtureCss,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(expected));
+    });
+  });
 
-  it('should remove :hover, :active, etc rules - always', () => {
-    var pusedoRemoveCssFilePath = path.join(__dirname, 'static-server', 'psuedo--remove.css')
+  it("should keep :before, :after, :visited rules (because el above fold)", () => {
+    var pseudoRemainCssFilePath = path.join(__dirname, "static-server", "psuedo--remain.css");
+    var pseudoRemainCss = read(pseudoRemainCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
-      css: pusedoRemoveCssFilePath
-    })
-      .then(result => {
-        expect(result.trim()).toBe('')
-      })
-  })
+      css: pseudoRemainCssFilePath,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(pseudoRemainCss));
+    });
+  });
+
+  it("should remove :hover, :active, etc rules - always", () => {
+    var pusedoRemoveCssFilePath = path.join(__dirname, "static-server", "psuedo--remove.css");
+
+    return penthouse({
+      url: page1FileUrl,
+      css: pusedoRemoveCssFilePath,
+    }).then((result) => {
+      expect(result.trim()).toBe("");
+    });
+  });
 
   /* ==@-rule handling== */
   /* - Case 0 : Non nested @-rule [REMAIN]
    (@charset, @import, @namespace)
    */
-  it('should keep complete case 0 @-rules (@import, @charset, @namespace)', () => {
-    var atRuleCase0RemainCssFilePath = path.join(__dirname, 'static-server', 'at-rule-case-0--remain.css')
-    var atRuleCase0RemainCss = read(atRuleCase0RemainCssFilePath).toString()
+  it("should keep complete case 0 @-rules (@import, @charset, @namespace)", () => {
+    var atRuleCase0RemainCssFilePath = path.join(
+      __dirname,
+      "static-server",
+      "at-rule-case-0--remain.css",
+    );
+    var atRuleCase0RemainCss = read(atRuleCase0RemainCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
-      css: atRuleCase0RemainCssFilePath
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(atRuleCase0RemainCss))
-      })
-  })
+      css: atRuleCase0RemainCssFilePath,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(atRuleCase0RemainCss));
+    });
+  });
 
   /* - Case 1: @-rule with CSS properties inside [REMAIN]
    (NOTE: @font-face, @keyframes are removed later in code, unless they are used.
    Therefor currently this test has to include CSS 'using' the @font-face|@keyframes)
    */
-  it('should keep complete case 1 @-rules (@font-face, @keyframes)', () => {
-    var atRuleCase1RemainCssFilePath = path.join(__dirname, 'static-server', 'at-rule-case-1--remain.css')
-    var atRuleCase1RemainCss = read(atRuleCase1RemainCssFilePath).toString()
+  it("should keep complete case 1 @-rules (@font-face, @keyframes)", () => {
+    var atRuleCase1RemainCssFilePath = path.join(
+      __dirname,
+      "static-server",
+      "at-rule-case-1--remain.css",
+    );
+    var atRuleCase1RemainCss = read(atRuleCase1RemainCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
-      css: atRuleCase1RemainCssFilePath
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(atRuleCase1RemainCss))
-      })
-  })
+      css: atRuleCase1RemainCssFilePath,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(atRuleCase1RemainCss));
+    });
+  });
 
   /* Case 2: @-rule with CSS properties inside [REMOVE]
    @page
    */
-  it('should remove complete case 2 @-rules (@page..)', () => {
-    var atRuleCase2RemoveCssFilePath = path.join(__dirname, 'static-server', 'at-rule-case-2--remove.css')
+  it("should remove complete case 2 @-rules (@page..)", () => {
+    var atRuleCase2RemoveCssFilePath = path.join(
+      __dirname,
+      "static-server",
+      "at-rule-case-2--remove.css",
+    );
 
     return penthouse({
       url: page1FileUrl,
-      css: atRuleCase2RemoveCssFilePath
-    })
-      .then(result => {
-        expect(result.trim()).toBe('')
-      })
-  })
+      css: atRuleCase2RemoveCssFilePath,
+    }).then((result) => {
+      expect(result.trim()).toBe("");
+    });
+  });
 
   /* Case 3: @-rule with full CSS (rules) inside [REMAIN]
    @media, @document, @supports..
    */
   // TODO: handle @document, @supports also in invalid css (normalising)
-  it('should keep case 3 @-rules (@media, @document..)', () => {
-    var atRuleCase3RemainCssFilePath = path.join(__dirname, 'static-server', 'at-rule-case-3--remain.css')
-    var atRuleCase3RemainCss = read(atRuleCase3RemainCssFilePath).toString()
+  it("should keep case 3 @-rules (@media, @document..)", () => {
+    var atRuleCase3RemainCssFilePath = path.join(
+      __dirname,
+      "static-server",
+      "at-rule-case-3--remain.css",
+    );
+    var atRuleCase3RemainCss = read(atRuleCase3RemainCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
       cssString: atRuleCase3RemainCss,
-      strict: true
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(atRuleCase3RemainCss))
-      })
-  })
+      strict: true,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(atRuleCase3RemainCss));
+    });
+  });
 
   /* Case 4: @-rule with full CSS (rules) inside [REMOVE]
    - @media print|speech|arual
    (removed via non-matching-media-query-remover in preformatting tests
    */
-  it('should remove case 4 @-rules (@media print|speech)', () => {
-    var atRuleCase4RemoveCssFilePath = path.join(__dirname, 'static-server', 'at-rule-case-4--remove.css')
+  it("should remove case 4 @-rules (@media print|speech)", () => {
+    var atRuleCase4RemoveCssFilePath = path.join(
+      __dirname,
+      "static-server",
+      "at-rule-case-4--remove.css",
+    );
 
     return penthouse({
       url: page1FileUrl,
-      css: atRuleCase4RemoveCssFilePath
-    })
-      .then(result => {
-        expect(result.trim()).toBe('')
-      })
-  })
+      css: atRuleCase4RemoveCssFilePath,
+    }).then((result) => {
+      expect(result.trim()).toBe("");
+    });
+  });
 
-  it('should keep self clearing rules when needed to stay outside the fold', () => {
-    var clearSelfRemainCssFilePath = path.join(__dirname, 'static-server', 'clearSelf--remain.css')
-    var clearSelfRemainCss = read(clearSelfRemainCssFilePath).toString()
+  it("should keep self clearing rules when needed to stay outside the fold", () => {
+    var clearSelfRemainCssFilePath = path.join(__dirname, "static-server", "clearSelf--remain.css");
+    var clearSelfRemainCss = read(clearSelfRemainCssFilePath).toString();
 
     return penthouse({
-      url: staticServerFileUrl('clearSelf.html'),
-      css: clearSelfRemainCssFilePath
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(clearSelfRemainCss))
-      })
-  })
+      url: staticServerFileUrl("clearSelf.html"),
+      css: clearSelfRemainCssFilePath,
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(clearSelfRemainCss));
+    });
+  });
 
-  it('should force include specified selectors', () => {
-    var forceIncludeCssFilePath = path.join(__dirname, 'static-server', 'forceInclude.css')
-    var forceIncludeCss = read(forceIncludeCssFilePath).toString()
+  it("should force include specified selectors", () => {
+    var forceIncludeCssFilePath = path.join(__dirname, "static-server", "forceInclude.css");
+    var forceIncludeCss = read(forceIncludeCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
       css: forceIncludeCssFilePath,
       forceInclude: [
-        '.myLoggedInSelectorRemainsEvenThoughNotFoundOnPage',
-        '#box1:hover',
-        /^\.COMPONENT/i // intentionally mismatching case to test regex flags
-      ]
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(forceIncludeCss))
-      })
-  })
+        ".myLoggedInSelectorRemainsEvenThoughNotFoundOnPage",
+        "#box1:hover",
+        /^\.COMPONENT/i, // intentionally mismatching case to test regex flags
+      ],
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(forceIncludeCss));
+    });
+  });
 
-  it('should force exclude specified selectors', () => {
-    var forceExcludeCssFilePath = path.join(__dirname, 'static-server', 'forceExclude.css')
-    var forceExcludeCss = read(forceExcludeCssFilePath).toString()
+  it("should force exclude specified selectors", () => {
+    var forceExcludeCssFilePath = path.join(__dirname, "static-server", "forceExclude.css");
+    var forceExcludeCss = read(forceExcludeCssFilePath).toString();
 
     return penthouse({
       url: page1FileUrl,
       css: forceExcludeCssFilePath,
-      forceExclude: [
-        '#box2', /#box2\d/
-      ]
-    })
-      .then(result => {
-        // forceExcluded all selectors in forceExclude css file
-        expect(result).toEqual('')
-      })
-  })
+      forceExclude: ["#box2", /#box2\d/],
+    }).then((result) => {
+      // forceExcluded all selectors in forceExclude css file
+      expect(result).toEqual("");
+    });
+  });
 
   // non essential
-  it('should remove empty rules', () => {
-    var emptyRemoveCssFilePath = path.join(__dirname, 'static-server', 'empty-rules--remove.css')
+  it("should remove empty rules", () => {
+    var emptyRemoveCssFilePath = path.join(__dirname, "static-server", "empty-rules--remove.css");
 
     return penthouse({
       url: page1FileUrl,
-      css: emptyRemoveCssFilePath
-    })
-      .then(result => {
-        expect(result.trim()).toBe('')
-      })
-  })
+      css: emptyRemoveCssFilePath,
+    }).then((result) => {
+      expect(result.trim()).toBe("");
+    });
+  });
 
-  it('should throw explicit error if page unloads during critical css generation', () => {
+  it("should throw explicit error if page unloads during critical css generation", () => {
     return penthouse({
-      url: staticServerFileUrl('infinite-page-refresh.html'),
-      cssString: '.doesNotMatterHere {}',
+      url: staticServerFileUrl("infinite-page-refresh.html"),
+      cssString: ".doesNotMatterHere {}",
       width: 800,
-      height: 450
+      height: 450,
     })
       .then(() => {
-        throw new Error('did not throw explicit page unload error')
+        throw new Error("did not throw explicit page unload error");
       })
-      .catch(err => {
+      .catch((err) => {
         if (err.message === PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE) {
           // Test passes
         } else {
-          throw new Error('did not throw explicit page unload error, but instead: ' + err)
+          throw new Error("did not throw explicit page unload error, but instead: " + err);
         }
-      })
-  })
+      });
+  });
 
   /* ==Modern CSS Features== */
-  it('should keep modern CSS features (@container, @layer, @property)', () => {
-    var modernCssFilePath = path.join(__dirname, 'static-server', 'modern-css-features.css')
-    var modernCss = read(modernCssFilePath).toString()
+  it("should keep modern CSS features (@container, @layer, @property)", () => {
+    var modernCssFilePath = path.join(__dirname, "static-server", "modern-css-features.css");
+    var modernCss = read(modernCssFilePath).toString();
 
     return penthouse({
-      url: staticServerFileUrl('modern-css-features.html'),
-      css: modernCssFilePath
-    })
-      .then(result => {
-        // Verify modern CSS features that are critical are kept
-        expect(result).toContain('@container')
-        expect(result).toContain('@layer')
-        expect(result).toContain('@property')
-      })
-  })
+      url: staticServerFileUrl("modern-css-features.html"),
+      css: modernCssFilePath,
+    }).then((result) => {
+      // Verify modern CSS features that are critical are kept
+      expect(result).toContain("@container");
+      expect(result).toContain("@layer");
+      expect(result).toContain("@property");
+    });
+  });
 
-  it('should keep empty @layer declarations for cascade ordering', () => {
-    const cssWithEmptyLayer = '@layer reset, base, components; @layer components { .btn { color: blue; } } body { margin: 0; }'
+  it("should keep empty @layer declarations for cascade ordering", () => {
+    const cssWithEmptyLayer =
+      "@layer reset, base, components; @layer components { .btn { color: blue; } } body { margin: 0; }";
 
     return penthouse({
       url: page1FileUrl,
-      cssString: cssWithEmptyLayer
-    })
-      .then(result => {
-        // Empty @layer declaration should be kept (css-tree outputs it as comma-separated list)
-        expect(result).toContain('@layer reset,base,components')
-        expect(result).toContain('@layer components')
-      })
-  })
+      cssString: cssWithEmptyLayer,
+    }).then((result) => {
+      // Empty @layer declaration should be kept (css-tree outputs it as comma-separated list)
+      expect(result).toContain("@layer reset,base,components");
+      expect(result).toContain("@layer components");
+    });
+  });
 
-  it('should keep all @container queries without size filtering', () => {
+  it("should keep all @container queries without size filtering", () => {
     // Test that container queries are kept regardless of size
     const cssWithLargeContainer = `
       #box1 { container-type: inline-size; container-name: card; }
@@ -270,20 +288,19 @@ describe('penthouse core tests', () => {
       @container card (min-width: 200px) {
         #box1 { font-size: 1rem; }
       }
-    `
+    `;
 
     return penthouse({
       url: page1FileUrl,
       cssString: cssWithLargeContainer,
       width: 1300,
-      height: 900
-    })
-      .then(result => {
-        // Both small and large container queries should be kept
-        // (they both apply to #box1 which is in page1.html)
-        expect(result).toContain('@container')
-        expect(result).toContain('5000px')
-        expect(result).toContain('200px')
-      })
-  })
-})
+      height: 900,
+    }).then((result) => {
+      // Both small and large container queries should be kept
+      // (they both apply to #box1 which is in page1.html)
+      expect(result).toContain("@container");
+      expect(result).toContain("5000px");
+      expect(result).toContain("200px");
+    });
+  });
+});

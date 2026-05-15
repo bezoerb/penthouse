@@ -360,7 +360,7 @@ async function pruneNonCriticalCssLauncher ({
       return resolve(returnValue)
     }
     killTimeout = setTimeout(() => {
-      cleanupAndExit({
+      void cleanupAndExit({
         error: new Error('Penthouse timed out after ' + timeout / 1000 + 's. ')
       })
     }, timeout)
@@ -390,7 +390,7 @@ async function pruneNonCriticalCssLauncher ({
           strict
         })
       } catch (e) {
-        cleanupAndExit({ error: e })
+        void cleanupAndExit({ error: e })
         return
       }
 
@@ -404,7 +404,7 @@ async function pruneNonCriticalCssLauncher ({
       // -> [BLOCK FOR] page preparation
       page = await updatedPagePromise
       if (!page) {
-        cleanupAndExit({ error: 'Could not open page in browser' })
+        void cleanupAndExit({ error: 'Could not open page in browser' })
         return
       }
 
@@ -433,13 +433,13 @@ async function pruneNonCriticalCssLauncher ({
       try {
         await loadPagePromise
       } catch (e) {
-        cleanupAndExit({ error: e })
+        void cleanupAndExit({ error: e })
         return
       }
       if (!page) {
         // in case we timed out
         debuglog('page load TIMED OUT')
-        cleanupAndExit({ error: new Error('Page load timed out') })
+        void cleanupAndExit({ error: new Error('Page load timed out') })
         return
       }
       if (_hasExited) return
@@ -506,7 +506,7 @@ async function pruneNonCriticalCssLauncher ({
         const errorDueToPageUnloaded = PUPPETEER_PAGE_UNLOADED_DURING_EXECUTION_ERROR_REGEX.test(
           err
         )
-        cleanupAndExit({
+        void cleanupAndExit({
           error: errorDueToPageUnloaded
             ? new Error(PAGE_UNLOADED_DURING_EXECUTION_ERROR_MESSAGE)
             : err
@@ -551,7 +551,7 @@ async function pruneNonCriticalCssLauncher ({
       }
       debuglog('generateCriticalCss DONE')
 
-      cleanupAndExit({ returnValue: css })
+      void cleanupAndExit({ returnValue: css })
     } catch (err) {
       reject(err)
     }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vite-plus/test";
 import puppeteer from "puppeteer";
 import { readFileSync as read } from "fs";
 import path from "path";
@@ -13,12 +13,7 @@ function staticServerFileUrl(file) {
 
 describe("extra tests for penthouse node module", () => {
   var page1FileUrl = staticServerFileUrl("page1.html");
-  var page1cssPath = path.join(
-    process.env.PWD,
-    "test",
-    "static-server",
-    "page1.css"
-  );
+  var page1cssPath = path.join(process.env.PWD, "test", "static-server", "page1.css");
 
   // Give tests time to settle between runs to avoid browser state conflicts
   afterEach(async () => {
@@ -68,7 +63,7 @@ describe("extra tests for penthouse node module", () => {
     let browserUsed = false;
 
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox'],
+      args: ["--no-sandbox"],
     });
 
     // Spy on browser.pages method as a means to see if this browser instance
@@ -91,47 +86,49 @@ describe("extra tests for penthouse node module", () => {
     });
   });
 
-  it("should handle parallell jobs, sharing one browser instance, closing afterwards",{ timeout: 10000 }, async () => {
-    // Track existing Chrome processes before test (e.g., Electron apps, other browsers)
-    const beforeTest = await chromeProcessesRunning();
-    const existingBrowserPIDs = new Set(beforeTest.browserPIDs || []);
-    const existingPagePIDs = new Set(beforeTest.pagePIDs || []);
+  it(
+    "should handle parallell jobs, sharing one browser instance, closing afterwards",
+    { timeout: 10000 },
+    async () => {
+      // Track existing Chrome processes before test (e.g., Electron apps, other browsers)
+      const beforeTest = await chromeProcessesRunning();
+      const existingBrowserPIDs = new Set(beforeTest.browserPIDs || []);
+      const existingPagePIDs = new Set(beforeTest.pagePIDs || []);
 
-    const urls = [page1FileUrl, page1FileUrl, page1FileUrl];
-    const promises = urls.map((url) => {
-      return penthouse({ url, css: page1cssPath, pageLoadSkipTimeout: 1000 });
-    });
-    const results = await Promise.all(promises);
-    const hasErrors = results.find((result) => {
-      return result.error || !result.length;
-    });
-    if (hasErrors) {
-      throw new Error("some result had errors: " + hasErrors);
-    }
+      const urls = [page1FileUrl, page1FileUrl, page1FileUrl];
+      const promises = urls.map((url) => {
+        return penthouse({ url, css: page1cssPath, pageLoadSkipTimeout: 1000 });
+      });
+      const results = await Promise.all(promises);
+      const hasErrors = results.find((result) => {
+        return result.error || !result.length;
+      });
+      if (hasErrors) {
+        throw new Error("some result had errors: " + hasErrors);
+      }
 
-    // Give Chrome some time to shut down
-    // NOTE: Browser cleanup is async, so we need to wait for processes to terminate
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+      // Give Chrome some time to shut down
+      // NOTE: Browser cleanup is async, so we need to wait for processes to terminate
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    // Check for NEW processes that weren't there before
-    const afterTest = await chromeProcessesRunning();
-    const newBrowserPIDs = (afterTest.browserPIDs || []).filter(
-      (pid) => !existingBrowserPIDs.has(pid)
-    );
-    const newPagePIDs = (afterTest.pagePIDs || []).filter(
-      (pid) => !existingPagePIDs.has(pid)
-    );
+      // Check for NEW processes that weren't there before
+      const afterTest = await chromeProcessesRunning();
+      const newBrowserPIDs = (afterTest.browserPIDs || []).filter(
+        (pid) => !existingBrowserPIDs.has(pid),
+      );
+      const newPagePIDs = (afterTest.pagePIDs || []).filter((pid) => !existingPagePIDs.has(pid));
 
-    if (newBrowserPIDs.length > 0 || newPagePIDs.length > 0) {
-      throw new Error(`Chromium processes created by this test did not shut down properly:
+      if (newBrowserPIDs.length > 0 || newPagePIDs.length > 0) {
+        throw new Error(`Chromium processes created by this test did not shut down properly:
         new browser PIDs: ${newBrowserPIDs.join(", ")}
         new page PIDs: ${newPagePIDs.join(", ")}`);
-    }
-  });
+      }
+    },
+  );
 
   it("should keep chromium browser instance open, if requested", async () => {
     browserPromiseForUnstableKeepOpenTests = puppeteer.launch({
-      args: ['--no-sandbox'],
+      args: ["--no-sandbox"],
     });
     try {
       await penthouse({
@@ -152,9 +149,7 @@ describe("extra tests for penthouse node module", () => {
       await browser.close();
 
       if (!browsers) {
-        throw new Error(
-          "Chromium did NOT keep running despite option telling it so"
-        );
+        throw new Error("Chromium did NOT keep running despite option telling it so");
       }
     } catch (err) {
       const browser = await browserPromiseForUnstableKeepOpenTests;

@@ -1,13 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vite-plus/test";
 import puppeteer from "puppeteer";
 import path from "path";
 import penthouse from "../../src/index.js";
 
 function staticServerPerfHtmlUrl(file) {
-  return (
-    "file://" +
-    path.join(process.env.PWD, "test", "static-server", "perf", file)
-  );
+  return "file://" + path.join(process.env.PWD, "test", "static-server", "perf", file);
 }
 
 const FIXTURES = [
@@ -38,45 +35,35 @@ const FIXTURES = [
 
 describe("performance tests for penthouse", () => {
   const browserPromise = puppeteer.launch({
-    args: ['--no-sandbox'],
+    args: ["--no-sandbox"],
   });
 
   let testsCompleted = 0;
   FIXTURES.forEach(({ name, threshold }) => {
     // forbesindustries has malformed HTML (64KB single line), needs pageLoadSkipTimeout
-    const timeout = name === 'forbesindustries' ? 15000 : 10000;
+    const timeout = name === "forbesindustries" ? 15000 : 10000;
     const penthouseOptions = {
       url: staticServerPerfHtmlUrl(`${name}.html`),
-      css: path.join(
-        process.env.PWD,
-        "test",
-        "static-server",
-        "perf",
-        `${name}.css`
-      ),
+      css: path.join(process.env.PWD, "test", "static-server", "perf", `${name}.css`),
       unstableKeepBrowserAlive: true,
-      puppeteer: { getBrowser: () => browserPromise }
+      puppeteer: { getBrowser: () => browserPromise },
     };
-    
+
     // Only use pageLoadSkipTimeout for forbesindustries (slow-loading malformed HTML)
-    if (name === 'forbesindustries') {
+    if (name === "forbesindustries") {
       penthouseOptions.pageLoadSkipTimeout = 5000;
     }
-    
-    it(
-      `Penthouse should handle ${name} in less than ${threshold / 1000}s`,
-      { timeout },
-      () => {
-        const start = Date.now();
-        return penthouse(penthouseOptions).then((result) => {
-          testsCompleted++;
-          if (testsCompleted === FIXTURES.length) {
-            console.log("close shared browser after performance tests");
-            browserPromise.then((browser) => browser.close());
-          }
-          expect(Date.now() - start).toBeLessThan(threshold);
-        });
-      }
-    );
+
+    it(`Penthouse should handle ${name} in less than ${threshold / 1000}s`, { timeout }, () => {
+      const start = Date.now();
+      return penthouse(penthouseOptions).then((result) => {
+        testsCompleted++;
+        if (testsCompleted === FIXTURES.length) {
+          console.log("close shared browser after performance tests");
+          browserPromise.then((browser) => browser.close());
+        }
+        expect(Date.now() - start).toBeLessThan(threshold);
+      });
+    });
   });
 });

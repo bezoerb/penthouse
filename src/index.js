@@ -32,7 +32,7 @@ const DEFAULT_PROPERTIES_TO_REMOVE = [
 const _UNSTABLE_KEEP_ALIVE_MAX_KEPT_OPEN_PAGES = 4
 
 function exitHandler (exitCode) {
-  closeBrowser({ forceClose: true })
+  void closeBrowser({ forceClose: true })
   process.exit(typeof exitCode === 'number' ? exitCode : 0)
 }
 

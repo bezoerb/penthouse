@@ -1,32 +1,32 @@
-import { describe, it, expect } from 'vitest'
-import * as csstree from 'css-tree'
-import path from 'path'
-import penthouse from '../src/index.js'
-import { readFileSync as read } from 'fs'
-import normaliseCss from './util/normaliseCss.js'
+import { describe, it, expect } from "vite-plus/test";
+import * as csstree from "css-tree";
+import path from "path";
+import penthouse from "../src/index.js";
+import { readFileSync as read } from "fs";
+import normaliseCss from "./util/normaliseCss.js";
 
-import ffRemover from '../src/postformatting/unused-fontface-remover.js'
-import unusedKeyframeRemover from '../src/postformatting/unused-keyframe-remover.js'
-import unwantedPropertiesRemover from '../src/postformatting/unwanted-properties-remover.js'
-import embeddedbase64Remover from '../src/postformatting/embedded-base64-remover.js'
+import ffRemover from "../src/postformatting/unused-fontface-remover.js";
+import unusedKeyframeRemover from "../src/postformatting/unused-keyframe-remover.js";
+import unwantedPropertiesRemover from "../src/postformatting/unwanted-properties-remover.js";
+import embeddedbase64Remover from "../src/postformatting/embedded-base64-remover.js";
 
-function staticServerFileUrl (file) {
-  return 'file://' + path.join(process.env.PWD, 'test', 'static-server', file)
+function staticServerFileUrl(file) {
+  return "file://" + path.join(process.env.PWD, "test", "static-server", file);
 }
 
-function countDeclarations (ast) {
-  let count = 0
+function countDeclarations(ast) {
+  let count = 0;
   csstree.walk(ast, {
-    visit: 'Declaration',
-    enter: () => count++
-  })
-  return count
+    visit: "Declaration",
+    enter: () => count++,
+  });
+  return count;
 }
 
-process.setMaxListeners(0)
+process.setMaxListeners(0);
 
-describe('penthouse post formatting tests', () => {
-  it('should remove propertiesToRemove', () => {
+describe("penthouse post formatting tests", () => {
+  it("should remove propertiesToRemove", () => {
     const originalCss = `
       body {
         transition: all 0.5s;
@@ -42,93 +42,122 @@ describe('penthouse post formatting tests', () => {
           pointer-events: null;
         }
       }
-    `
+    `;
     const propertiesToRemove = [
-      '(.*)transition(.*)',
-      'cursor',
-      'pointer-events',
-      '(-webkit-)?tap-highlight-color',
-      '(.*)user-select'
-    ]
+      "(.*)transition(.*)",
+      "cursor",
+      "pointer-events",
+      "(-webkit-)?tap-highlight-color",
+      "(.*)user-select",
+    ];
 
-    const ast = csstree.parse(originalCss)
-    const beforeRemoval = countDeclarations(ast)
+    const ast = csstree.parse(originalCss);
+    const beforeRemoval = countDeclarations(ast);
 
-    unwantedPropertiesRemover(ast, propertiesToRemove)
+    unwantedPropertiesRemover(ast, propertiesToRemove);
 
-    expect(beforeRemoval).toEqual(8)
-    expect(countDeclarations(ast)).toEqual(0)
-  })
+    expect(beforeRemoval).toEqual(8);
+    expect(countDeclarations(ast)).toEqual(0);
+  });
 
-  it('should remove embedded base64', () => {
-    const originalCss = read(path.join(process.env.PWD, 'test', 'static-server', 'embedded-base64--remove.css')).toString()
-    const expectedCss = read(path.join(process.env.PWD, 'test', 'static-server', 'embedded-base64--remove--expected.css')).toString()
+  it("should remove embedded base64", () => {
+    const originalCss = read(
+      path.join(process.env.PWD, "test", "static-server", "embedded-base64--remove.css"),
+    ).toString();
+    const expectedCss = read(
+      path.join(process.env.PWD, "test", "static-server", "embedded-base64--remove--expected.css"),
+    ).toString();
 
-    const ast = csstree.parse(originalCss)
+    const ast = csstree.parse(originalCss);
 
     // NOTE: penthouse's default max uri length is 1000.
     // lowering the limit here so that everything will be removed in test fixture
-    embeddedbase64Remover(ast, 250)
+    embeddedbase64Remover(ast, 250);
 
-    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss))
-  })
+    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss));
+  });
 
-  it('should remove @font-face rule, because it is not used', () => {
-    var fontFaceRemoveCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'fontface--remove.css')
-    var fontFaceRemoveExpectedCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'fontface--remove--expected.css')
-    var originalCss = read(fontFaceRemoveCssFilePath).toString()
-    var expectedCss = read(fontFaceRemoveExpectedCssFilePath).toString()
+  it("should remove @font-face rule, because it is not used", () => {
+    var fontFaceRemoveCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "fontface--remove.css",
+    );
+    var fontFaceRemoveExpectedCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "fontface--remove--expected.css",
+    );
+    var originalCss = read(fontFaceRemoveCssFilePath).toString();
+    var expectedCss = read(fontFaceRemoveExpectedCssFilePath).toString();
 
-    const ast = csstree.parse(originalCss)
+    const ast = csstree.parse(originalCss);
 
-    ffRemover(ast)
+    ffRemover(ast);
 
-    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss))
-  })
+    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss));
+  });
 
-  it('should treat font-family names as case-insensitive', () => {
+  it("should treat font-family names as case-insensitive", () => {
     // contains mismatched case for font-name between @font-face and usage ("Roboto" vs "roboto")
     // - should be kept regardless
-    const cssString = "@font-face{font-family:'Roboto';font-style:normal;font-weight:300;src:local('Roboto Light')}#one{color:red;font-family:'roboto';font-weight:300}#one{color:blue}"
+    const cssString =
+      "@font-face{font-family:'Roboto';font-style:normal;font-weight:300;src:local('Roboto Light')}#one{color:red;font-family:'roboto';font-weight:300}#one{color:blue}";
     return penthouse({
-      url: staticServerFileUrl('case-sensitive.html'),
-      cssString
-    })
-      .then(css => {
-        expect(css).toEqual(normaliseCss(cssString))
-      })
-  })
+      url: staticServerFileUrl("case-sensitive.html"),
+      cssString,
+    }).then((css) => {
+      expect(css).toEqual(normaliseCss(cssString));
+    });
+  });
 
-  it('should only keep @keyframe rules used in critical css', () => {
-    const originalCss = read(path.join(process.env.PWD, 'test', 'static-server', 'unused-keyframes.css'), 'utf8')
-    const expectedCss = read(path.join(process.env.PWD, 'test', 'static-server', 'unused-keyframes--expected.css'), 'utf8')
+  it("should only keep @keyframe rules used in critical css", () => {
+    const originalCss = read(
+      path.join(process.env.PWD, "test", "static-server", "unused-keyframes.css"),
+      "utf8",
+    );
+    const expectedCss = read(
+      path.join(process.env.PWD, "test", "static-server", "unused-keyframes--expected.css"),
+      "utf8",
+    );
 
-    const ast = csstree.parse(originalCss)
+    const ast = csstree.parse(originalCss);
 
-    unusedKeyframeRemover(ast)
+    unusedKeyframeRemover(ast);
 
-    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss))
-  })
+    expect(csstree.generate(ast)).toEqual(normaliseCss(expectedCss));
+  });
 
-  it('should not remove transitions but still remove cursor from css', () => {
-    var fullCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'transition-full.css')
-    var expectedCssFilePath = path.join(process.env.PWD, 'test', 'static-server', 'transition-crit--expected.css')
-    var expectedCss = read(expectedCssFilePath).toString()
+  it("should not remove transitions but still remove cursor from css", () => {
+    var fullCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "transition-full.css",
+    );
+    var expectedCssFilePath = path.join(
+      process.env.PWD,
+      "test",
+      "static-server",
+      "transition-crit--expected.css",
+    );
+    var expectedCss = read(expectedCssFilePath).toString();
 
     return penthouse({
-      url: staticServerFileUrl('transition.html'),
+      url: staticServerFileUrl("transition.html"),
       css: fullCssFilePath,
       width: 800,
       height: 450,
       propertiesToRemove: [
-        'cursor',
-        'pointer-events',
-        '(-webkit-)?tap-highlight-color',
-        '(.*)user-select'
-      ]
-    })
-      .then(result => {
-        expect(result).toEqual(normaliseCss(expectedCss))
-      })
-  })
-})
+        "cursor",
+        "pointer-events",
+        "(-webkit-)?tap-highlight-color",
+        "(.*)user-select",
+      ],
+    }).then((result) => {
+      expect(result).toEqual(normaliseCss(expectedCss));
+    });
+  });
+});

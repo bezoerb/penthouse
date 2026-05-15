@@ -26,10 +26,12 @@ function extractPIDs(processLines) {
     return [];
   }
   // Extract PIDs from ps aux output (second column)
-  return processLines.map(line => {
-    const parts = line.trim().split(/\s+/);
-    return parts[1]; // PID is the second column
-  }).filter(Boolean);
+  return processLines
+    .map((line) => {
+      const parts = line.trim().split(/\s+/);
+      return parts[1]; // PID is the second column
+    })
+    .filter(Boolean);
 }
 
 export default function chromeProcessesRunning() {

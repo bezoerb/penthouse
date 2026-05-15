@@ -2,32 +2,31 @@
 // Can be used to setup custom configuration, and more.
 // See puppeteer docs for more options:
 // https://github.com/GoogleChrome/puppeteer).
-import penthouse from 'penthouse'
-import puppeteer from 'puppeteer' // installed by penthouse
+import penthouse from "penthouse";
+import puppeteer from "puppeteer"; // installed by penthouse
 
 const browserPromise = puppeteer.launch({
   ignoreHTTPSErrors: true,
-  args: ['--disable-setuid-sandbox', '--no-sandbox'],
+  args: ["--disable-setuid-sandbox", "--no-sandbox"],
   // not required to specify here, but saves Penthouse some work if you will
   // re-use the same viewport for most penthouse calls.
   defaultViewport: {
     width: 1300,
-    height: 900
-  }
-})
-penthouse({
-	// pageGotoOptions are the options for puppeteer: Check the available options : https://github.com/puppeteer/puppeteer/blob/v14.0.0/docs/api.md#pagegotourl-options
-  url: 'https://google.com',
-  cssString: 'body { color: red }',
+    height: 900,
+  },
+});
+void penthouse({
+  // pageGotoOptions are the options for puppeteer: Check the available options : https://github.com/puppeteer/puppeteer/blob/v14.0.0/docs/api.md#pagegotourl-options
+  url: "https://google.com",
+  cssString: "body { color: red }",
   puppeteer: {
     getBrowser: () => browserPromise,
-    pageGotoOptions: {waitUntil: 'networkidle0'}
-  }
-})
-  .then(criticalCss => {
-    // use it
-    console.log('got critical css with nr chars:', criticalCss.length)
-  })
+    pageGotoOptions: { waitUntil: "networkidle0" },
+  },
+}).then((criticalCss) => {
+  // use it
+  console.log("got critical css with nr chars:", criticalCss.length);
+});
 
 // NOTE: by default Penthouse closes the browser it uses as soon as there are no ongoing jobs,
 // even when a custom `getBrowser` function is used. You can currently override this behavior

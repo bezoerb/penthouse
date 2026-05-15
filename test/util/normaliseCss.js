@@ -1,9 +1,9 @@
-import * as csstree from 'css-tree'
+import * as csstree from "css-tree";
 
-function parseCssAst (css) {
-  return csstree.parse(css)
+function parseCssAst(css) {
+  return csstree.parse(css);
 }
 // because dont want to fail tests on white space differences
-export default function normaliseCss (css) {
-  return csstree.generate(parseCssAst(css))
+export default function normaliseCss(css) {
+  return csstree.generate(parseCssAst(css));
 }
